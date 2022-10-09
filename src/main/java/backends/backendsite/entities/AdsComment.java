@@ -1,21 +1,31 @@
-package backends.backendsite.dto;
+package backends.backendsite.entities;
 
+import javax.persistence.*;
 import java.time.LocalDateTime;
 
-public class AdsCommentDto {
+@Entity
+public class AdsComment {
 
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "ads_comment_pk")
     private Integer pk;
+
+    @Column(name = "comment_author")
     private Integer author;
+
+    @Column(name = "comment_text")
     private String text;
+
+    @Column(name = "crated_time")
     private LocalDateTime createdAt;
 
-    public Integer getAuthor() {
-        return author;
-    }
+    @ManyToOne
+    private Ads ads;
 
-    public void setAuthor(Integer author) {
-        this.author = author;
-    }
+    @ManyToOne
+    private SiteUser siteUser;
+
 
     public Integer getPk() {
         return pk;
@@ -23,6 +33,14 @@ public class AdsCommentDto {
 
     public void setPk(Integer pk) {
         this.pk = pk;
+    }
+
+    public Integer getAuthor() {
+        return author;
+    }
+
+    public void setAuthor(Integer author) {
+        this.author = author;
     }
 
     public String getText() {

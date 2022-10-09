@@ -4,6 +4,7 @@ import backends.backendsite.dto.CreateUserDto;
 import backends.backendsite.dto.NewPasswordDto;
 import backends.backendsite.dto.ResponseWrapperDto;
 import backends.backendsite.dto.UserDto;
+import backends.backendsite.entities.SiteUser;
 
 public interface UserService {
 
@@ -16,4 +17,6 @@ public interface UserService {
     NewPasswordDto setPassword(NewPasswordDto password);
 
     UserDto getUser(Integer id);
+
+    SiteUser findUserByEmail(String email);
 }

@@ -11,4 +11,6 @@ public interface SiteUserRepository extends JpaRepository<SiteUser, Integer> {
 
     Optional<SiteUser> findSiteUserByPassword(String password);
 
+    Optional<SiteUser> findSiteUserByEmail(String email);
+
 }
