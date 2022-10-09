@@ -1,32 +1,30 @@
 package backends.backendsite.service;
 
-import backends.backendsite.dto.AdsCommentDto;
-import backends.backendsite.dto.AdsDto;
-import backends.backendsite.dto.FullAdsDto;
-import backends.backendsite.dto.ResponseWrapperDto;
+import backends.backendsite.dto.*;
+import backends.backendsite.entities.SiteUser;
 
 public interface AdsService {
 
     ResponseWrapperDto<AdsDto> getAllAds();
 
-    AdsDto addAds(AdsDto adsDto);
+    AdsDto addAds(CreateAdsDto adsDto);
 
-    ResponseWrapperDto<AdsDto> getAdsMe();
+    ResponseWrapperDto<AdsDto> getAdsMe(Integer price, String title, SiteUser user);
 
-    ResponseWrapperDto<AdsCommentDto> getAdsComments(Integer ad_pk);
+    ResponseWrapperDto<AdsCommentDto> getAdsComments(Integer adPk);
 
-    AdsCommentDto addAdsComment(Integer ad_pk);
+    AdsCommentDto addAdsComment(Integer adPk, String text);
 
-    void deleteAdsComment(Integer ad_pk, Integer id);
+    String deleteAdsComment(Integer adPk, Integer id);
 
-    AdsCommentDto getAdsComment(Integer ad_pk, Integer id);
+    AdsCommentDto getAdsComment(Integer adPk, Integer id);
 
-    AdsCommentDto updateAdsComment(Integer ad_pk, Integer id);
+    AdsCommentDto updateAdsComment(Integer adPk, Integer id, AdsCommentDto commentDto);
 
-    void removeAds(Integer id);
+    String removeAds(Integer id);
 
     FullAdsDto getAds(Integer id);
 
-    AdsDto updateAds(Integer id);
+    AdsDto updateAds(Integer id, AdsDto adsDto);
 
 }

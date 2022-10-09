@@ -73,6 +73,7 @@ public class UserServiceImpl implements UserService {
             return null;
         } else {
             SiteUser result = userOptional.get();
+            logger.info("Request for change password of user with firstName: {}; lastName: {}", result.getFirstName(), result.getLastName());
             result.setPassword(password.getNewPassword());
             siteUserRepository.save(result);
             return password;
@@ -84,5 +85,12 @@ public class UserServiceImpl implements UserService {
         logger.info("Request for getting information about user with id {}", id);
         Optional<SiteUser> siteUser = siteUserRepository.findById(id);
         return siteUser.map(userMapper::fromSiteUserToUserDto).orElse(null);
+    }
+
+    @Override
+    public SiteUser findUserByEmail(String email) {
+        logger.info("Request for searching user with firstName {}", email);
+        Optional<SiteUser> siteUser = siteUserRepository.findSiteUserByEmail(email);
+        return siteUser.orElse(null);
     }
 }

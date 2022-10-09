@@ -4,6 +4,7 @@ import lombok.Getter;
 import lombok.Setter;
 
 import javax.persistence.*;
+import java.util.Set;
 
 @Entity
 @Table(name = "site_user")
@@ -28,6 +29,12 @@ public class SiteUser {
 
     @Column(name = "user_password")
     private String password;
+
+    @OneToMany
+    private Set<Ads> siteUserAds;
+
+    @OneToMany
+    private Set<AdsComment> userComments;
 
 
     public Integer getId() {

@@ -1,8 +1,5 @@
 package backends.backendsite.dto;
 
-import lombok.Getter;
-import lombok.Setter;
-
 public class CreateUserDto {
 
     private String firstName;

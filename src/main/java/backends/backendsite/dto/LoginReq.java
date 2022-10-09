@@ -1,6 +1,5 @@
 package backends.backendsite.dto;
 
-
 public class LoginReq {
 
     private String password;
