@@ -13,6 +13,6 @@ public interface AdsRepository extends JpaRepository<Ads, Integer> {
 
     List<Ads> findAdsBySiteUserId(Integer siteUserId);
 
-    Ads findAdsByTitle(String title);
+    List<Ads> findAdsByTitleContains(String text);
 
 }
