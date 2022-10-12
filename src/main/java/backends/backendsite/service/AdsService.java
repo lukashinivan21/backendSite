@@ -27,4 +27,10 @@ public interface AdsService {
 
     AdsDto updateAds(Integer id, AdsDto adsDto);
 
+    ResponseWrapperDto<AdsCommentDto> getCommentWithText(String text);
+
+    ResponseWrapperDto<AdsDto> getAdsWithTitleContainsText(String text);
+
+
+
 }

@@ -11,4 +11,6 @@ public interface AdsCommentRepository extends JpaRepository<AdsComment, Integer>
 
     List<AdsComment> findAdsCommentsByAds_Pk(Integer pk);
 
+    List<AdsComment> findAdsCommentsByTextContains(String text);
+
 }

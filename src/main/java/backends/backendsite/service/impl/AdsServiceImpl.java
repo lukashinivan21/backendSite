@@ -61,9 +61,7 @@ public class AdsServiceImpl implements AdsService {
         logger.info("Create new ad");
         Ads ads = selfAdsMapper.fromCreateAdsDtoToAds(adsDto);
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        String email = authentication.getName();
-        Integer id = userService.findUserByEmail(email).getId();
-        ads.setAuthor(id);
+        ads.setAuthor(userService.findUserByEmail(authentication.getName()).getId());
         return selfAdsMapper.fromAdsToAdsDto(adsRepository.save(ads));
     }
 
@@ -112,6 +110,17 @@ public class AdsServiceImpl implements AdsService {
     @Override
     public String deleteAdsComment(Integer adPk, Integer id) {
         logger.info("Request for deleting comment with id: {}", id);
+        Optional<Ads> adsOptional = adsRepository.findById(adPk);
+        if (adsOptional.isEmpty()) {
+            return null;
+        }
+        List<Integer> idsOfAdsCommentList = adsCommentRepository.findAdsCommentsByAds_Pk(adPk)
+                .stream()
+                .map(AdsComment::getPk)
+                .collect(Collectors.toList());
+        if (!idsOfAdsCommentList.contains(id)) {
+            return null;
+        }
         Optional<AdsComment> optionalAdsComment = adsCommentRepository.findById(id);
         if (optionalAdsComment.isEmpty()) {
             return null;
@@ -123,7 +132,18 @@ public class AdsServiceImpl implements AdsService {
 
     @Override
     public AdsCommentDto getAdsComment(Integer adPk, Integer id) {
-        logger.info("Request for getting information about comment with id: {}", id);
+        logger.info("Request for getting information about comment with id: {} of ads with id: {}", id, adPk);
+        Optional<Ads> optionalAds = adsRepository.findById(adPk);
+        if (optionalAds.isEmpty()) {
+            return null;
+        }
+        List<Integer> idsOfComments = adsCommentRepository.findAdsCommentsByAds_Pk(adPk)
+                .stream()
+                .map(AdsComment::getPk)
+                .collect(Collectors.toList());
+        if (!idsOfComments.contains(id)) {
+            return null;
+        }
         Optional<AdsComment> optionalAdsComment = adsCommentRepository.findById(id);
         if (optionalAdsComment.isEmpty()) {
             return null;
@@ -163,9 +183,7 @@ public class AdsServiceImpl implements AdsService {
         if (adsOptional.isEmpty()) {
             return null;
         } else {
-            Ads result = adsOptional.get();
-            SiteUser adsOwner = result.getSiteUser();
-            return selfAdsMapper.mapToFullAdsDto(result, adsOwner);
+            return selfAdsMapper.mapToFullAdsDto(adsOptional.get(), adsOptional.get().getSiteUser());
         }
     }
 
@@ -176,11 +194,36 @@ public class AdsServiceImpl implements AdsService {
         if (optionalAds.isEmpty()) {
             return null;
         } else {
-            Ads ads = optionalAds.get();
-            Ads result = selfAdsMapper.fromAdsDtoToAds(adsDto, ads);
+            Ads result = selfAdsMapper.fromAdsDtoToAds(adsDto, optionalAds.get());
             return selfAdsMapper.fromAdsToAdsDto(adsRepository.save(result));
         }
     }
 
+    @Override
+    public ResponseWrapperDto<AdsCommentDto> getCommentWithText(String text) {
+        List<AdsComment> result = adsCommentRepository.findAdsCommentsByTextContains(text);
+        if (result.isEmpty()) {
+            return null;
+        } else {
+            List<AdsCommentDto> list = result.stream().map(commentMapper::fromAdsCommentToAdsCommentDto).collect(Collectors.toList());
+            ResponseWrapperDto<AdsCommentDto> responseWrapperDto = new ResponseWrapperDto<>();
+            responseWrapperDto.setList(list);
+            responseWrapperDto.setCount(list.size());
+            return responseWrapperDto;
+        }
+    }
 
+    @Override
+    public ResponseWrapperDto<AdsDto> getAdsWithTitleContainsText(String text) {
+        List<Ads> adsList = adsRepository.findAdsByTitleContains(text);
+        if (adsList.isEmpty()) {
+            return null;
+        } else {
+            List<AdsDto> list = adsList.stream().map(selfAdsMapper::fromAdsToAdsDto).collect(Collectors.toList());
+            ResponseWrapperDto<AdsDto> result = new ResponseWrapperDto<>();
+            result.setList(list);
+            result.setCount(list.size());
+            return result;
+        }
+    }
 }
