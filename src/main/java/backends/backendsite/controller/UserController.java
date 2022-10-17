@@ -1,13 +1,13 @@
 package backends.backendsite.controller;
 
-
-import backends.backendsite.dto.CreateUserDto;
 import backends.backendsite.dto.NewPasswordDto;
 import backends.backendsite.dto.ResponseWrapperDto;
 import backends.backendsite.dto.UserDto;
 import backends.backendsite.service.UserService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -21,14 +21,6 @@ public class UserController {
         this.userService = userService;
     }
 
-    @PostMapping
-    public ResponseEntity<CreateUserDto> addUser(@RequestBody CreateUserDto createUser) {
-        if (createUser.getEmail() == null || createUser.getPassword() == null) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
-        }
-        CreateUserDto createUserDto = userService.addUser(createUser);
-        return ResponseEntity.ok(createUserDto);
-    }
 
     @GetMapping("/me")
     public ResponseEntity<ResponseWrapperDto<UserDto>> getUsers() {
@@ -38,7 +30,8 @@ public class UserController {
 
     @PatchMapping("/me")
     public ResponseEntity<UserDto> updateUser(@RequestBody UserDto user) {
-        UserDto result = userService.updateUser(user);
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        UserDto result = userService.updateUser(user, authentication.getName());
         if (result == null) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
         }

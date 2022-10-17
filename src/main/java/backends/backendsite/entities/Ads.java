@@ -1,38 +1,44 @@
 package backends.backendsite.entities;
 
 import javax.persistence.*;
+import java.util.List;
 import java.util.Set;
 
 @Entity
 @Table(name = "ads")
 public class Ads {
 
-
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "pk")
+    @Column(name = "ads_pk")
     private Integer pk;
 
-    @Column(name = "author")
+    @Column(name = "ads_author")
     private Integer author;
 
-    @Column(name = "image")
+    @Column(name = "ads_image")
     private String image;
 
-    @Column(name = "price")
+    @Column(name = "ads_price")
     private Integer price;
 
-    @Column(name = "title")
+    @Column(name = "ads_title")
     private String title;
 
-    @Column(name = "description")
+    @Column(name = "ads_description")
     private String description;
 
-    @ManyToOne
-    private SiteUser siteUser;
+    @ManyToOne(cascade = {
+            CascadeType.DETACH, CascadeType.MERGE, CascadeType.PERSIST, CascadeType.REFRESH})
+//    @JoinColumn(name = "site_user_details_id")
+    private SiteUserDetails siteUserDetails;
 
-    @OneToMany
-    private Set<AdsComment> comments;
+    @OneToMany(mappedBy = "ads", cascade = CascadeType.ALL)
+    private List<AdsComment> comments;
+
+    public Ads() {
+
+    }
 
     public Integer getAuthor() {
         return author;
@@ -82,7 +88,11 @@ public class Ads {
         this.description = description;
     }
 
-    public SiteUser getSiteUser() {
-        return siteUser;
+    public SiteUserDetails getSiteUserDetails() {
+        return siteUserDetails;
+    }
+
+    public List<AdsComment> getComments() {
+        return comments;
     }
 }

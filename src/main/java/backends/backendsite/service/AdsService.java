@@ -7,7 +7,7 @@ public interface AdsService {
 
     ResponseWrapperDto<AdsDto> getAllAds();
 
-    AdsDto addAds(CreateAdsDto adsDto);
+    AdsDto addAds(CreateAdsDto adsDto, String email);
 
     ResponseWrapperDto<AdsDto> getAdsMe(Integer price, String title, SiteUser user);
 

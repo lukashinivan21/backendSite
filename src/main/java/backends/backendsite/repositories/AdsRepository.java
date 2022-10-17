@@ -11,7 +11,7 @@ public interface AdsRepository extends JpaRepository<Ads, Integer> {
 
     List<Ads> findByAuthorAndPriceAndTitle(Integer author, Integer price, String title);
 
-    List<Ads> findAdsBySiteUserId(Integer siteUserId);
+    List<Ads> findAdsBySiteUserDetailsId(Integer siteUserId);
 
     List<Ads> findAdsByTitleContains(String text);
 

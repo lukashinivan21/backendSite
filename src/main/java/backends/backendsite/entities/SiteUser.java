@@ -1,80 +1,39 @@
 package backends.backendsite.entities;
 
-import lombok.Getter;
-import lombok.Setter;
-
 import javax.persistence.*;
-import java.util.Set;
 
 @Entity
-@Table(name = "site_user")
+@Table(name = "users")
 public class SiteUser {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "user_id")
-    private Integer id;
+    @Column(name = "username")
+    private String username;
 
-    @Column(name = "user_first_name")
-    private String firstName;
-
-    @Column(name = "user_last_name")
-    private String lastName;
-
-    @Column(name = "user_phone")
-    private String phone;
-
-    @Column(name = "user_email")
-    private String email;
-
-    @Column(name = "user_password")
+    @Column(name = "password")
     private String password;
 
-    @OneToMany
-    private Set<Ads> siteUserAds;
+    @Column(name = "enabled")
+    private boolean enabled;
 
-    @OneToMany
-    private Set<AdsComment> userComments;
+    @OneToOne(cascade = CascadeType.ALL)
+    @JoinColumn(name = "authority_username")
+    private Authority authority;
 
+    @OneToOne(cascade = CascadeType.ALL)
+    @JoinColumn(name = "site_user_details_id")
+    private SiteUserDetails siteUserDetails;
 
-    public Integer getId() {
-        return id;
+    public SiteUser() {
+
     }
 
-    public void setId(Integer id) {
-        this.id = id;
+    public String getUsername() {
+        return username;
     }
 
-    public String getFirstName() {
-        return firstName;
-    }
-
-    public void setFirstName(String firstName) {
-        this.firstName = firstName;
-    }
-
-    public String getLastName() {
-        return lastName;
-    }
-
-    public void setLastName(String lastName) {
-        this.lastName = lastName;
-    }
-
-    public String getPhone() {
-        return phone;
-    }
-
-    public void setPhone(String phone) {
-        this.phone = phone;
-    }
-
-    public String getEmail() {
-        return email;
-    }
-
-    public void setEmail(String email) {
-        this.email = email;
+    public void setUsername(String email) {
+        this.username = email;
     }
 
     public String getPassword() {
@@ -83,5 +42,25 @@ public class SiteUser {
 
     public void setPassword(String password) {
         this.password = password;
+    }
+
+    public boolean isEnabled() {
+        return enabled;
+    }
+
+    public void setEnabled(boolean enabled) {
+        this.enabled = enabled;
+    }
+
+    public SiteUserDetails getSiteUserDetails() {
+        return siteUserDetails;
+    }
+
+    public void setSiteUserDetails(SiteUserDetails userDetails) {
+        this.siteUserDetails = userDetails;
+    }
+
+    public Authority getAuthority() {
+        return authority;
     }
 }
