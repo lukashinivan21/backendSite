@@ -15,6 +15,11 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
+
+import javax.validation.Valid;
+import javax.validation.constraints.NotBlank;
+import javax.validation.constraints.NotNull;
 
 @RestController
 @RequestMapping("/ads")
@@ -35,11 +40,18 @@ public class AdsController {
     }
 
     @PostMapping
-    public ResponseEntity<AdsDto> createAds(@RequestBody CreateAdsDto createAdsDto) {
+    public ResponseEntity<AdsDto> createAds(@RequestPart("image") @Valid @NotNull @NotBlank MultipartFile image,
+            @RequestPart("properties") @Valid @NotNull @NotBlank CreateAdsDto createAdsDto,
+                                            Authentication authentication) {
         if (createAdsDto.getTitle().equals("") || createAdsDto.getDescription().equals("") || createAdsDto.getPrice() == null) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
         }
-        return ResponseEntity.ok(adsService.addAds(createAdsDto));
+        String email = authentication.getName();
+        AdsDto result = adsService.addAds(createAdsDto, email);
+        if (result == null) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+        }
+        return ResponseEntity.ok(result);
     }
 
     //    <-----*****----->

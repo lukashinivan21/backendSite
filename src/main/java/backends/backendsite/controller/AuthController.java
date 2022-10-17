@@ -2,7 +2,6 @@ package backends.backendsite.controller;
 
 import backends.backendsite.dto.LoginReq;
 import backends.backendsite.dto.RegisterReq;
-import backends.backendsite.dto.Role;
 import backends.backendsite.service.AuthService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -34,8 +33,8 @@ public class AuthController {
 
     @PostMapping("/register")
     public ResponseEntity<?> register(@RequestBody RegisterReq req) {
-        Role role = req.getRole() == null ? USER : req.getRole();
-        if (authService.register(req, role)) {
+//        Role role = req.getRole() == null ? USER : req.getRole();
+        if (authService.register(req, USER)) {
             return ResponseEntity.ok().build();
         } else {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();

@@ -2,10 +2,13 @@ package backends.backendsite.service.impl;
 
 import backends.backendsite.dto.RegisterReq;
 import backends.backendsite.dto.Role;
+import backends.backendsite.entities.SiteUser;
+import backends.backendsite.entities.SiteUserDetails;
+import backends.backendsite.repositories.SiteUserRepository;
+import backends.backendsite.repositories.UserDetailsRepository;
 import backends.backendsite.service.AuthService;
 import org.springframework.security.core.userdetails.User;
 import org.springframework.security.core.userdetails.UserDetails;
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.provisioning.UserDetailsManager;
 import org.springframework.stereotype.Service;
@@ -15,12 +18,16 @@ public class AuthServiceImpl implements AuthService {
 
 
     private final UserDetailsManager manager;
+    private final PasswordEncoder passwordEncoder;
+    private final UserDetailsRepository userDetailsRepository;
+    private final SiteUserRepository siteUserRepository;
 
-    private final PasswordEncoder encoder;
-
-    public AuthServiceImpl(UserDetailsManager detailsManager) {
+    public AuthServiceImpl(UserDetailsManager detailsManager, PasswordEncoder passwordEncoder,
+                           UserDetailsRepository userDetailsRepository, SiteUserRepository siteUserRepository) {
         this.manager = detailsManager;
-        this.encoder = new BCryptPasswordEncoder();
+        this.passwordEncoder = passwordEncoder;
+        this.userDetailsRepository = userDetailsRepository;
+        this.siteUserRepository = siteUserRepository;
     }
 
 
@@ -31,23 +38,38 @@ public class AuthServiceImpl implements AuthService {
         }
         UserDetails userDetails = manager.loadUserByUsername(username);
         String encryptedPassword = userDetails.getPassword();
-        String encryptedPasswordWithoutEncryptionType = encryptedPassword.substring(8);
-        return encoder.matches(password, encryptedPasswordWithoutEncryptionType);
+        return passwordEncoder.matches(password, encryptedPassword);
     }
 
     @Override
     public boolean register(RegisterReq registerReq, Role role) {
         if (manager.userExists(registerReq.getUsername())) {
             return false;
+        } else {
+            manager.createUser(
+                    User.withUsername(registerReq.getUsername())
+                            .password(passwordEncoder.encode(registerReq.getPassword()))
+                            .roles(role.toString())
+                            .build()
+            );
+
+            SiteUser siteUser = siteUserRepository.findSiteUserByUsername(registerReq.getUsername()).orElseThrow();
+            SiteUserDetails userDetails = new SiteUserDetails();
+            userDetails.setFirstName(registerReq.getFirstName());
+            userDetails.setLastName(registerReq.getLastName());
+            userDetails.setPhone(registerReq.getPhone());
+            siteUser.setSiteUserDetails(userDetails);
+            siteUserRepository.save(siteUser);
+//            userDetailsRepository.save(userDetails);
+            return true;
         }
-        manager.createUser(
-                User.withDefaultPasswordEncoder()
-                        .password(registerReq.getPassword())
-                        .username(registerReq.getUsername())
-                        .roles(role.name())
-                        .build()
-        );
-        return true;
     }
+
+
+    //                    User.withDefaultPasswordEncoder()
+//                            .password(registerReq.getPassword())
+//                            .username(registerReq.getUsername())
+//                            .roles(role.name())
+//                            .build()
 
 }

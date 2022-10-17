@@ -4,6 +4,7 @@ import javax.persistence.*;
 import java.time.LocalDateTime;
 
 @Entity
+@Table(name = "ads_comment")
 public class AdsComment {
 
     @Id
@@ -17,15 +18,22 @@ public class AdsComment {
     @Column(name = "comment_text")
     private String text;
 
-    @Column(name = "crated_time")
+    @Column(name = "created_time")
     private LocalDateTime createdAt;
 
-    @ManyToOne
+    @ManyToOne(cascade = {
+            CascadeType.DETACH, CascadeType.MERGE, CascadeType.PERSIST, CascadeType.REFRESH})
+    @JoinColumn(name = "ads_pk")
     private Ads ads;
 
-    @ManyToOne
-    private SiteUser siteUser;
+    @ManyToOne(cascade = {
+            CascadeType.DETACH, CascadeType.MERGE, CascadeType.PERSIST, CascadeType.REFRESH})
+//    @JoinColumn(name = "site_user_details_id")
+    private SiteUserDetails siteUserDetails;
 
+    public AdsComment() {
+
+    }
 
     public Integer getPk() {
         return pk;
@@ -58,4 +66,17 @@ public class AdsComment {
     public void setCreatedAt(LocalDateTime createdAt) {
         this.createdAt = createdAt;
     }
+
+    public Ads getAds() {
+        return ads;
+    }
+
+    public void setAds(Ads ads) {
+        this.ads = ads;
+    }
+
+    public SiteUserDetails getSiteUserDetails() {
+        return siteUserDetails;
+    }
+
 }

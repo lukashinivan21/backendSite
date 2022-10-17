@@ -5,6 +5,7 @@ import backends.backendsite.dto.CreateAdsDto;
 import backends.backendsite.dto.FullAdsDto;
 import backends.backendsite.entities.Ads;
 import backends.backendsite.entities.SiteUser;
+import backends.backendsite.entities.SiteUserDetails;
 
 public interface SelfAdsMapper {
 
@@ -14,7 +15,7 @@ public interface SelfAdsMapper {
 
     Ads fromCreateAdsDtoToAds(CreateAdsDto createAdsDto);
 
-    FullAdsDto mapToFullAdsDto(Ads ads, SiteUser siteUser);
+    FullAdsDto mapToFullAdsDto(Ads ads, SiteUser siteUser, SiteUserDetails userDetails);
 
 
 }

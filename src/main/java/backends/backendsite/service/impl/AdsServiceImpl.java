@@ -4,6 +4,7 @@ import backends.backendsite.dto.*;
 import backends.backendsite.entities.Ads;
 import backends.backendsite.entities.AdsComment;
 import backends.backendsite.entities.SiteUser;
+import backends.backendsite.entities.SiteUserDetails;
 import backends.backendsite.mappers.AdsCommentMapper;
 import backends.backendsite.mappers.SelfAdsMapper;
 import backends.backendsite.repositories.AdsCommentRepository;
@@ -12,8 +13,6 @@ import backends.backendsite.service.AdsService;
 import backends.backendsite.service.UserService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
@@ -57,18 +56,22 @@ public class AdsServiceImpl implements AdsService {
     }
 
     @Override
-    public AdsDto addAds(CreateAdsDto adsDto) {
+    public AdsDto addAds(CreateAdsDto adsDto, String email) {
         logger.info("Create new ad");
-        Ads ads = selfAdsMapper.fromCreateAdsDtoToAds(adsDto);
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        ads.setAuthor(userService.findUserByEmail(authentication.getName()).getId());
-        return selfAdsMapper.fromAdsToAdsDto(adsRepository.save(ads));
+        SiteUser siteUser = userService.findUserByEmail(email);
+        if (siteUser == null) {
+            return null;
+        } else {
+            Ads ads = selfAdsMapper.fromCreateAdsDtoToAds(adsDto);
+            ads.setAuthor(siteUser.getSiteUserDetails().getId());
+            return selfAdsMapper.fromAdsToAdsDto(adsRepository.save(ads));
+        }
     }
 
     @Override
     public ResponseWrapperDto<AdsDto> getAdsMe(Integer price, String title, SiteUser user) {
-        logger.info("Request for getting all ads of user with id {}", user.getId());
-        List<Ads> adsMe = adsRepository.findByAuthorAndPriceAndTitle(user.getId(), price, title);
+        logger.info("Request for getting all ads of user with id {}", user.getSiteUserDetails().getId());
+        List<Ads> adsMe = adsRepository.findByAuthorAndPriceAndTitle(user.getSiteUserDetails().getId(), price, title);
         List<AdsDto> result = adsMe.stream().map(selfAdsMapper::fromAdsToAdsDto).collect(Collectors.toList());
         ResponseWrapperDto<AdsDto> responseWrapperDto = new ResponseWrapperDto<>();
         responseWrapperDto.setList(result);
@@ -98,8 +101,9 @@ public class AdsServiceImpl implements AdsService {
         if (adsOptional.isEmpty()) {
             return null;
         } else {
-            SiteUser siteUser = adsOptional.get().getSiteUser();
+            SiteUserDetails siteUser = adsOptional.get().getSiteUserDetails();
             AdsComment result = new AdsComment();
+            result.setAds(adsOptional.get());
             result.setAuthor(siteUser.getId());
             result.setText(text);
             result.setCreatedAt(LocalDateTime.now());
@@ -183,7 +187,7 @@ public class AdsServiceImpl implements AdsService {
         if (adsOptional.isEmpty()) {
             return null;
         } else {
-            return selfAdsMapper.mapToFullAdsDto(adsOptional.get(), adsOptional.get().getSiteUser());
+            return selfAdsMapper.mapToFullAdsDto(adsOptional.get(), adsOptional.get().getSiteUserDetails().getSiteUser(), adsOptional.get().getSiteUserDetails());
         }
     }
 
