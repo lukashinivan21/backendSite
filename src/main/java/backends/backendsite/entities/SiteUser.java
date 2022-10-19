@@ -48,10 +48,6 @@ public class SiteUser {
         return enabled;
     }
 
-    public void setEnabled(boolean enabled) {
-        this.enabled = enabled;
-    }
-
     public SiteUserDetails getSiteUserDetails() {
         return siteUserDetails;
     }
@@ -62,5 +58,9 @@ public class SiteUser {
 
     public Authority getAuthority() {
         return authority;
+    }
+
+    public void setAuthority(Authority authority) {
+        this.authority = authority;
     }
 }

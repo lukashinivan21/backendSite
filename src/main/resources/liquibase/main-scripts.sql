@@ -42,3 +42,11 @@ CREATE TABLE ads_comment
     created_time   TIMESTAMP NOT NULL
 );
 
+CREATE TABLE images
+(
+    image_id SERIAL NOT NULL PRIMARY KEY,
+    file_path TEXT NOT NULL,
+    file_size BIGINT NOT NULL,
+    media_type TEXT NOT NULL,
+    image_data BIGINT NOT NULL
+);

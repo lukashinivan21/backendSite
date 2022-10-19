@@ -9,10 +9,13 @@ import backends.backendsite.mappers.AdsCommentMapper;
 import backends.backendsite.mappers.SelfAdsMapper;
 import backends.backendsite.repositories.AdsCommentRepository;
 import backends.backendsite.repositories.AdsRepository;
+import backends.backendsite.repositories.SiteUserRepository;
 import backends.backendsite.service.AdsService;
 import backends.backendsite.service.UserService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
@@ -31,14 +34,16 @@ public class AdsServiceImpl implements AdsService {
     private final UserService userService;
     private final AdsCommentRepository adsCommentRepository;
     private final AdsCommentMapper commentMapper;
+    private final SiteUserRepository siteUserRepository;
 
     public AdsServiceImpl(AdsRepository adsRepository, SelfAdsMapper selfAdsMapper, UserService userService,
-                          AdsCommentRepository adsCommentRepository, AdsCommentMapper commentMapper) {
+                          AdsCommentRepository adsCommentRepository, AdsCommentMapper commentMapper, SiteUserRepository siteUserRepository) {
         this.adsRepository = adsRepository;
         this.selfAdsMapper = selfAdsMapper;
         this.userService = userService;
         this.adsCommentRepository = adsCommentRepository;
         this.commentMapper = commentMapper;
+        this.siteUserRepository = siteUserRepository;
     }
 
     @Override
@@ -57,13 +62,14 @@ public class AdsServiceImpl implements AdsService {
 
     @Override
     public AdsDto addAds(CreateAdsDto adsDto, String email) {
-        logger.info("Create new ad");
-        SiteUser siteUser = userService.findUserByEmail(email);
-        if (siteUser == null) {
+        logger.info("Create new ad by user with username: {}", email);
+        Optional<SiteUser> siteUser = siteUserRepository.findSiteUserByUsername(email);
+        if (siteUser.isEmpty()) {
             return null;
         } else {
             Ads ads = selfAdsMapper.fromCreateAdsDtoToAds(adsDto);
-            ads.setAuthor(siteUser.getSiteUserDetails().getId());
+            ads.setAuthor(siteUser.get().getSiteUserDetails().getId());
+            ads.setSiteUserDetails(siteUser.get().getSiteUserDetails());
             return selfAdsMapper.fromAdsToAdsDto(adsRepository.save(ads));
         }
     }
@@ -96,18 +102,23 @@ public class AdsServiceImpl implements AdsService {
 
     @Override
     public AdsCommentDto addAdsComment(Integer adPk, String text) {
-        logger.info("Request fod adding comment with text: \"{}\" to ad with id {}", text, adPk);
+        String username = SecurityContextHolder.getContext().getAuthentication().getName();
+        logger.info("Request fod adding comment with text: \"{}\" to ad with id {} from user with username: {}", text, adPk, username);
         Optional<Ads> adsOptional = adsRepository.findById(adPk);
         if (adsOptional.isEmpty()) {
             return null;
         } else {
-            SiteUserDetails siteUser = adsOptional.get().getSiteUserDetails();
-            AdsComment result = new AdsComment();
-            result.setAds(adsOptional.get());
-            result.setAuthor(siteUser.getId());
-            result.setText(text);
-            result.setCreatedAt(LocalDateTime.now());
-            return commentMapper.fromAdsCommentToAdsCommentDto(adsCommentRepository.save(result));
+            Optional<SiteUser> siteUser = siteUserRepository.findSiteUserByUsername(username);
+            if (siteUser.isPresent()) {
+                AdsComment result = new AdsComment();
+                result.setAds(adsOptional.get());
+                result.setAuthor(siteUser.get().getSiteUserDetails().getId());
+                result.setText(text);
+                result.setCreatedAt(LocalDateTime.now());
+                return commentMapper.fromAdsCommentToAdsCommentDto(adsCommentRepository.save(result));
+            } else {
+                return null;
+            }
         }
     }
 

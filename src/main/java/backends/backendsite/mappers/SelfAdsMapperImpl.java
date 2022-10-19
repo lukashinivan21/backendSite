@@ -28,11 +28,21 @@ public class SelfAdsMapperImpl implements SelfAdsMapper{
     @Override
     public AdsDto fromAdsToAdsDto(Ads ads) {
         AdsDto adsDto = new AdsDto();
-        adsDto.setPk(ads.getPk());
-        adsDto.setTitle(ads.getTitle());
-        adsDto.setPrice(ads.getPrice());
-        adsDto.setImage(ads.getImage());
-        adsDto.setAuthor(ads.getAuthor());
+        if (ads.getPk() != null) {
+            adsDto.setPk(ads.getPk());
+        }
+        if (ads.getTitle() != null) {
+            adsDto.setTitle(ads.getTitle());
+        }
+        if (ads.getPrice() != null) {
+            adsDto.setPrice(ads.getPrice());
+        }
+        if (ads.getImage() != null) {
+            adsDto.setImage(ads.getImage());
+        }
+        if (ads.getAuthor() != null) {
+            adsDto.setAuthor(ads.getAuthor());
+        }
         return adsDto;
     }
 
