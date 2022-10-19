@@ -9,6 +9,8 @@ import java.util.List;
 @Repository
 public interface AdsRepository extends JpaRepository<Ads, Integer> {
 
+    Ads findAdsByPk(Integer id);
+
     List<Ads> findByAuthorAndPriceAndTitle(Integer author, Integer price, String title);
 
     List<Ads> findAdsBySiteUserDetailsId(Integer siteUserId);

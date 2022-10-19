@@ -2,7 +2,6 @@ package backends.backendsite.entities;
 
 import javax.persistence.*;
 import java.util.List;
-import java.util.Set;
 
 @Entity
 @Table(name = "ads")
@@ -35,6 +34,9 @@ public class Ads {
 
     @OneToMany(mappedBy = "ads", cascade = CascadeType.ALL)
     private List<AdsComment> comments;
+
+    @OneToMany(mappedBy = "ads", cascade = CascadeType.ALL)
+    private List<Image> images;
 
     public Ads() {
 
@@ -92,7 +94,15 @@ public class Ads {
         return siteUserDetails;
     }
 
+    public void setSiteUserDetails(SiteUserDetails siteUserDetails) {
+        this.siteUserDetails = siteUserDetails;
+    }
+
     public List<AdsComment> getComments() {
         return comments;
+    }
+
+    public List<Image> getImages() {
+        return images;
     }
 }

@@ -2,9 +2,12 @@ package backends.backendsite.controller;
 
 import backends.backendsite.dto.*;
 import backends.backendsite.entities.SiteUser;
+import backends.backendsite.repositories.AdsRepository;
 import backends.backendsite.service.AdsService;
+import backends.backendsite.service.ImageService;
 import backends.backendsite.service.UserService;
 import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.enums.ParameterIn;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -20,6 +23,7 @@ import org.springframework.web.multipart.MultipartFile;
 import javax.validation.Valid;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
+import java.io.IOException;
 
 @RestController
 @RequestMapping("/ads")
@@ -28,30 +32,39 @@ public class AdsController {
 
     private final AdsService adsService;
     private final UserService userService;
+    private final ImageService imageService;
+    private final AdsRepository adsRepository;
 
-    public AdsController(AdsService adsService, UserService userService) {
+    public AdsController(AdsService adsService, UserService userService, ImageService imageService, AdsRepository adsRepository) {
         this.adsService = adsService;
         this.userService = userService;
+        this.imageService = imageService;
+        this.adsRepository = adsRepository;
     }
 
     @GetMapping
     public ResponseEntity<ResponseWrapperDto<AdsDto>> getAllAds() {
         return ResponseEntity.ok(adsService.getAllAds());
     }
-
+//(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     @PostMapping
-    public ResponseEntity<AdsDto> createAds(@RequestPart("image") @Valid @NotNull @NotBlank MultipartFile image,
+    public ResponseEntity<AdsDto> createAds(
             @RequestPart("properties") @Valid @NotNull @NotBlank CreateAdsDto createAdsDto,
-                                            Authentication authentication) {
-        if (createAdsDto.getTitle().equals("") || createAdsDto.getDescription().equals("") || createAdsDto.getPrice() == null) {
+            @RequestPart("image") @Valid @NotNull @NotBlank MultipartFile image) throws IOException {
+        if (createAdsDto.getTitle() == null || createAdsDto.getDescription() == null || createAdsDto.getPrice() == null) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
         }
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         String email = authentication.getName();
         AdsDto result = adsService.addAds(createAdsDto, email);
         if (result == null) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+        } else {
+            Integer id = result.getPk();
+            imageService.uploadImage(image, email, id);
+            result.setImage(adsRepository.findAdsByPk(id).getImage());
+            return ResponseEntity.ok(result);
         }
-        return ResponseEntity.ok(result);
     }
 
     //    <-----*****----->
@@ -152,7 +165,7 @@ public class AdsController {
             )
     })
     @DeleteMapping(value = "/{id}")
-    public ResponseEntity<String> removeAds(@Parameter(example = "1") @PathVariable Integer id){
+    public ResponseEntity<String> removeAds(@Parameter(example = "1") @PathVariable Integer id) {
         return ResponseEntity.ok(adsService.removeAds(id));
     }
 

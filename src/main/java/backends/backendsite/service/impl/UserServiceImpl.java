@@ -11,9 +11,9 @@ import backends.backendsite.repositories.UserDetailsRepository;
 import backends.backendsite.service.UserService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.security.provisioning.JdbcUserDetailsManager;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
@@ -29,20 +29,19 @@ public class UserServiceImpl implements UserService {
     private final UserDetailsRepository detailsRepository;
     private final UserMapper userMapper;
     private final PasswordEncoder passwordEncoder;
-    private final JdbcUserDetailsManager jdbcUserDetailsManager;
 
     public UserServiceImpl(SiteUserRepository siteUserRepository, UserDetailsRepository detailsRepository,
-                           UserMapper userMapper, PasswordEncoder passwordEncoder, JdbcUserDetailsManager jdbcUserDetailsManager) {
+                           UserMapper userMapper, PasswordEncoder passwordEncoder) {
         this.siteUserRepository = siteUserRepository;
         this.detailsRepository = detailsRepository;
         this.userMapper = userMapper;
         this.passwordEncoder = passwordEncoder;
-        this.jdbcUserDetailsManager = jdbcUserDetailsManager;
     }
 
     @Override
     public ResponseWrapperDto<UserDto> getUsers() {
-        logger.info("Request for getting list of all users");
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        logger.info("Request for getting list of all users from userName: {}", authentication.getName());
         List<SiteUserDetails> siteUsers = detailsRepository.findAll();
         List<UserDto> result = new ArrayList<>();
         for (SiteUserDetails user : siteUsers) {
@@ -64,33 +63,37 @@ public class UserServiceImpl implements UserService {
         } else {
             SiteUser siteUser = userOptional.get();
             SiteUser user = userMapper.fromUserDtoToSiteUser(siteUser, userDTO);
-//            detailsRepository.save(user.getSiteUserDetails());
             logger.info("Changes are finished");
             SiteUser result = siteUserRepository.save(user);
-            UserDetails jUser = jdbcUserDetailsManager.loadUserByUsername(email);
-            jdbcUserDetailsManager.updateUser(jUser);
             return userMapper.fromSiteUserToUserDto(result.getSiteUserDetails());
         }
     }
 
     @Override
-    public NewPasswordDto setPassword(NewPasswordDto password) {
-//        jdbcUserDetailsManager.changePassword(passwordEncoder.encode(password.getCurrentPassword()), passwordEncoder.encode(password.getNewPassword()));
-        Optional<SiteUser> userOptional = siteUserRepository.findSiteUserByPassword(passwordEncoder.encode(password.getCurrentPassword()));
+    public NewPasswordDto setPassword(NewPasswordDto password, String email) {
+        Optional<SiteUser> userOptional = siteUserRepository.findSiteUserByUsername(email);
         if (userOptional.isEmpty()) {
+            logger.info("Пользователя с таким email: *** \"{}\" *** нет.", email);
             return null;
         } else {
             SiteUser result = userOptional.get();
-            logger.info("Request for change password of user with username: {}", result.getUsername());
-            result.setPassword(passwordEncoder.encode(password.getNewPassword()));
-            siteUserRepository.save(result);
-            return password;
+            logger.info("Request for change password of user: \"{}\" from email: {}", result.getUsername(), email);
+            if (!passwordEncoder.matches(password.getCurrentPassword(), result.getPassword())) {
+                logger.info("Введеный пароль: {} не соответствует текущему паролю: {}. Изменение пароля запрещено", password.getCurrentPassword(), result.getPassword());
+                return null;
+            } else {
+                logger.info("Введеный пароль и текущий пароль совпадают. Изменение пароля допускается.");
+                result.setPassword(passwordEncoder.encode(password.getNewPassword()));
+                siteUserRepository.save(result);
+                return password;
+            }
         }
     }
 
     @Override
     public UserDto getUser(Integer id) {
-        logger.info("Request for getting information about user with id {}", id);
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        logger.info("Request for getting information about user with id {} from userName: {}", id, authentication.getName());
         Optional<SiteUserDetails> siteUser = detailsRepository.findById(id);
         if (siteUser.isEmpty()) {
             return null;

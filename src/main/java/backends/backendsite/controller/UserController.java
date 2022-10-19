@@ -30,6 +30,9 @@ public class UserController {
 
     @PatchMapping("/me")
     public ResponseEntity<UserDto> updateUser(@RequestBody UserDto user) {
+        if (user.getId() == null) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
+        }
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         UserDto result = userService.updateUser(user, authentication.getName());
         if (result == null) {
@@ -40,7 +43,8 @@ public class UserController {
 
     @PostMapping("/set_password")
     public ResponseEntity<NewPasswordDto> setPassword(@RequestBody NewPasswordDto password) {
-        NewPasswordDto result = userService.setPassword(password);
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        NewPasswordDto result = userService.setPassword(password, authentication.getName());
         if (result == null) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
         }
