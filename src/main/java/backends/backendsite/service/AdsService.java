@@ -1,6 +1,7 @@
 package backends.backendsite.service;
 
 import backends.backendsite.dto.*;
+import backends.backendsite.entities.Ads;
 import backends.backendsite.entities.SiteUser;
 
 public interface AdsService {
@@ -30,6 +31,8 @@ public interface AdsService {
     ResponseWrapperDto<AdsCommentDto> getCommentWithText(String text);
 
     ResponseWrapperDto<AdsDto> getAdsWithTitleContainsText(String text);
+
+    Ads getAdsByPk(Integer pk);
 
 
 

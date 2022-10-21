@@ -6,12 +6,12 @@ import backends.backendsite.dto.UserDto;
 import backends.backendsite.entities.SiteUser;
 import backends.backendsite.entities.SiteUserDetails;
 import backends.backendsite.mappers.UserMapper;
+import backends.backendsite.repositories.AuthorityRepository;
 import backends.backendsite.repositories.SiteUserRepository;
 import backends.backendsite.repositories.UserDetailsRepository;
 import backends.backendsite.service.UserService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -19,6 +19,8 @@ import org.springframework.stereotype.Service;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+
+import static backends.backendsite.service.StringConstants.*;
 
 @Service
 public class UserServiceImpl implements UserService {
@@ -29,33 +31,41 @@ public class UserServiceImpl implements UserService {
     private final UserDetailsRepository detailsRepository;
     private final UserMapper userMapper;
     private final PasswordEncoder passwordEncoder;
+    private final AuthorityRepository authorityRepository;
 
     public UserServiceImpl(SiteUserRepository siteUserRepository, UserDetailsRepository detailsRepository,
-                           UserMapper userMapper, PasswordEncoder passwordEncoder) {
+                           UserMapper userMapper, PasswordEncoder passwordEncoder, AuthorityRepository authorityRepository) {
         this.siteUserRepository = siteUserRepository;
         this.detailsRepository = detailsRepository;
         this.userMapper = userMapper;
         this.passwordEncoder = passwordEncoder;
+        this.authorityRepository = authorityRepository;
     }
 
     @Override
     public ResponseWrapperDto<UserDto> getUsers() {
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        logger.info("Request for getting list of all users from userName: {}", authentication.getName());
-        List<SiteUserDetails> siteUsers = detailsRepository.findAll();
-        List<UserDto> result = new ArrayList<>();
-        for (SiteUserDetails user : siteUsers) {
-            result.add(userMapper.fromSiteUserToUserDto(user));
-        }
-        ResponseWrapperDto<UserDto> responseWrapperDto = new ResponseWrapperDto<>();
-        responseWrapperDto.setList(result);
-        responseWrapperDto.setCount(result.size());
-        return responseWrapperDto;
+        String email = SecurityContextHolder.getContext().getAuthentication().getName();
+        String role = authorityRepository.findAuthorityByUsername(email).getAuthority();
+        logger.info("Request for getting list of all users from userName: {}, with role: {}", email, role);
+//        if (role.equals("ROLE_USER")) {
+//            return null;
+//        } else {
+            List<SiteUserDetails> siteUsers = detailsRepository.findAll();
+            List<UserDto> result = new ArrayList<>();
+            for (SiteUserDetails user : siteUsers) {
+                result.add(userMapper.fromSiteUserToUserDto(user));
+            }
+            ResponseWrapperDto<UserDto> responseWrapperDto = new ResponseWrapperDto<>();
+            responseWrapperDto.setList(result);
+            responseWrapperDto.setCount(result.size());
+            return responseWrapperDto;
+//        }
     }
 
     @Override
     public UserDto updateUser(UserDto userDTO, String email) {
-        logger.info("Request for updating user with username: {}", email);
+        String role = authorityRepository.findAuthorityByUsername(email).getAuthority();
+        logger.info("Request for updating user with username: {}, with role: {}", email, role);
         Optional<SiteUser> userOptional = siteUserRepository.findSiteUserByUsername(email);
         if (userOptional.isEmpty()) {
             logger.info("There are not user with username {} in list of users", email);
@@ -92,14 +102,20 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public UserDto getUser(Integer id) {
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        logger.info("Request for getting information about user with id {} from userName: {}", id, authentication.getName());
+        String email = SecurityContextHolder.getContext().getAuthentication().getName();
+        String role = authorityRepository.findAuthorityByUsername(email).getAuthority();
+        logger.info("Request for getting information about user with id {} from userName: {}", id, email);
         Optional<SiteUserDetails> siteUser = detailsRepository.findById(id);
         if (siteUser.isEmpty()) {
             return null;
         } else {
-            SiteUserDetails user = siteUser.get();
-            return userMapper.fromSiteUserToUserDto(user);
+            if ((siteUser.get().getSiteUser().getUsername().equals(email) && role.equals(USER)) || role.equals(ADMIN)) {
+                return userMapper.fromSiteUserToUserDto(siteUser.get());
+            } else {
+                UserDto userDto = new UserDto();
+                userDto.setFirstName(HAVE_NOT);
+                return userDto;
+            }
         }
     }
 

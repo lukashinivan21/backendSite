@@ -5,6 +5,7 @@ import backends.backendsite.entities.AdsComment;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
+import java.time.temporal.ChronoUnit;
 
 @Service
 public class AdsCommentMapperImpl implements AdsCommentMapper{
@@ -21,9 +22,9 @@ public class AdsCommentMapperImpl implements AdsCommentMapper{
 
     @Override
     public AdsComment fromAdsCommentDtoToAdsComment(AdsCommentDto dto, AdsComment comment) {
-        if (!dto.getText().equals("")) {
+        if (dto.getText() != null) {
             comment.setText(dto.getText());
-            comment.setCreatedAt(LocalDateTime.now());
+            comment.setCreatedAt(LocalDateTime.now().truncatedTo(ChronoUnit.SECONDS));
         }
         return comment;
     }

@@ -6,9 +6,13 @@ import backends.backendsite.dto.UserDto;
 import backends.backendsite.service.UserService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.annotation.Secured;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
+
+import static backends.backendsite.service.StringConstants.HAVE_NOT;
 
 @RestController
 @RequestMapping("/users")
@@ -21,20 +25,18 @@ public class UserController {
         this.userService = userService;
     }
 
-
     @GetMapping("/me")
+    @PreAuthorize("hasAuthority('ROLE_ADMIN')")
     public ResponseEntity<ResponseWrapperDto<UserDto>> getUsers() {
         ResponseWrapperDto<UserDto> result = userService.getUsers();
         return ResponseEntity.ok(result);
     }
 
     @PatchMapping("/me")
+    @PreAuthorize("hasAnyAuthority('ROLE_USER', 'ROLE_ADMIN')")
     public ResponseEntity<UserDto> updateUser(@RequestBody UserDto user) {
-        if (user.getId() == null) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
-        }
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        UserDto result = userService.updateUser(user, authentication.getName());
+        String email = SecurityContextHolder.getContext().getAuthentication().getName();
+        UserDto result = userService.updateUser(user, email);
         if (result == null) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
         }
@@ -42,6 +44,7 @@ public class UserController {
     }
 
     @PostMapping("/set_password")
+    @PreAuthorize("hasAnyAuthority('ROLE_USER', 'ROLE_ADMIN')")
     public ResponseEntity<NewPasswordDto> setPassword(@RequestBody NewPasswordDto password) {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         NewPasswordDto result = userService.setPassword(password, authentication.getName());
@@ -52,12 +55,17 @@ public class UserController {
     }
 
     @GetMapping("{id}")
+    @PreAuthorize("hasAnyAuthority('ROLE_USER', 'ROLE_ADMIN')")
     public ResponseEntity<UserDto> getUser(@PathVariable Integer id) {
         UserDto result = userService.getUser(id);
         if (result == null) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
         }
+        if (result.getFirstName().equals(HAVE_NOT)) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+        }
         return ResponseEntity.ok(result);
     }
+
 
 }

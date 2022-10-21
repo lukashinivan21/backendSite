@@ -4,20 +4,16 @@ import backends.backendsite.dto.AdsDto;
 import backends.backendsite.dto.CreateAdsDto;
 import backends.backendsite.dto.FullAdsDto;
 import backends.backendsite.entities.Ads;
-import backends.backendsite.entities.SiteUser;
 import backends.backendsite.entities.SiteUserDetails;
 import org.springframework.stereotype.Service;
 
 @Service
-public class SelfAdsMapperImpl implements SelfAdsMapper{
+public class SelfAdsMapperImpl implements SelfAdsMapper {
 
     @Override
     public Ads fromAdsDtoToAds(AdsDto adsDto, Ads ads) {
-        if (!adsDto.getTitle().equals("")) {
+        if (adsDto.getTitle() != null) {
             ads.setTitle(adsDto.getTitle());
-        }
-        if (!adsDto.getImage().equals("")) {
-            ads.setImage(adsDto.getImage());
         }
         if (adsDto.getPrice() != null) {
             ads.setPrice(ads.getPrice());
@@ -57,7 +53,7 @@ public class SelfAdsMapperImpl implements SelfAdsMapper{
     }
 
     @Override
-    public FullAdsDto mapToFullAdsDto(Ads ads, SiteUser siteUser, SiteUserDetails userDetails) {
+    public FullAdsDto mapToFullAdsDto(Ads ads, SiteUserDetails userDetails) {
         FullAdsDto result = new FullAdsDto();
         result.setPk(ads.getPk());
         result.setPrice(ads.getPrice());
@@ -67,7 +63,7 @@ public class SelfAdsMapperImpl implements SelfAdsMapper{
         result.setAuthorFirstName(userDetails.getFirstName());
         result.setAuthorLastName(userDetails.getLastName());
         result.setPhone(userDetails.getPhone());
-        result.setEmail(siteUser.getUsername());
+        result.setEmail(userDetails.getSiteUser().getUsername());
         return result;
     }
 }

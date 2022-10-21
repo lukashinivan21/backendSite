@@ -79,4 +79,7 @@ public class AdsComment {
         return siteUserDetails;
     }
 
+    public void setSiteUserDetails(SiteUserDetails siteUserDetails) {
+        this.siteUserDetails = siteUserDetails;
+    }
 }
