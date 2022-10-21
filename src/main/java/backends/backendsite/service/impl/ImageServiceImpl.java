@@ -12,6 +12,9 @@ import org.springframework.web.multipart.MultipartFile;
 import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.time.LocalDate;
+import java.time.LocalTime;
+import java.time.temporal.ChronoUnit;
 import java.util.Objects;
 import java.util.Optional;
 
@@ -37,10 +40,12 @@ public class ImageServiceImpl implements ImageService {
         Optional<Ads> optionalAds = adsRepository.findById(id);
 
         if (optionalAds.isPresent()) {
+            String date = LocalDate.now().toString();
+            String time = LocalTime.now().truncatedTo(ChronoUnit.MINUTES).toString().replace(":", ".");
 
             Ads ads = optionalAds.get();
             String title = ads.getTitle();
-            Path filePath = Path.of(imagesDir + "/" + email + "/" + title, title + "." + getExtension(Objects.requireNonNull(image.getOriginalFilename())));
+            Path filePath = Path.of(imagesDir + "/" + email + "/" + title, title + " " + date + " " + time +"." + getExtension(Objects.requireNonNull(image.getOriginalFilename())));
             Files.createDirectories(filePath.getParent());
             Files.deleteIfExists(filePath);
 
@@ -55,6 +60,7 @@ public class ImageServiceImpl implements ImageService {
             adsRepository.save(ads);
 
             Image newImage = new Image();
+
             newImage.setAds(ads);
             newImage.setFilePath(filePath.toString());
             newImage.setFileSize(image.getSize());
@@ -71,5 +77,8 @@ public class ImageServiceImpl implements ImageService {
         return fileName.substring(fileName.lastIndexOf(".") + 1);
     }
 
-
+    @Override
+    public Image getImageById(Integer id) {
+        return imageRepository.findById(id).orElse(null);
+    }
 }
