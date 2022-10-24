@@ -6,6 +6,9 @@ import org.springframework.stereotype.Repository;
 
 import java.util.List;
 
+/**
+ * Repository for interaction with database and table stored data about ads
+ */
 @Repository
 public interface AdsRepository extends JpaRepository<Ads, Integer> {
 

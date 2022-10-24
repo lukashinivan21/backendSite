@@ -2,6 +2,9 @@ package backends.backendsite.entities;
 
 import javax.persistence.*;
 
+/**
+ * Class contains entity of authority
+ */
 @Entity
 @Table(name = "authorities")
 public class Authority {

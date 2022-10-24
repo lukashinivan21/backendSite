@@ -4,6 +4,9 @@ import javax.persistence.*;
 import java.util.List;
 import java.util.Set;
 
+/**
+ * Class contains entity of user's info
+ */
 @Entity
 @Table(name = "user_details")
 public class SiteUserDetails {
@@ -23,7 +26,7 @@ public class SiteUserDetails {
     private String phone;
 
     @OneToOne(mappedBy = "siteUserDetails", cascade = CascadeType.ALL)
-    @JoinColumn(name = "username_of_user")
+//    @JoinColumn(name = "username_of_user")
     private SiteUser siteUser;
 
     @OneToMany(mappedBy = "siteUserDetails", cascade = CascadeType.ALL)

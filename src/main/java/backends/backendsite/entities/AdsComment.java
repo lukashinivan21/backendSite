@@ -3,6 +3,9 @@ package backends.backendsite.entities;
 import javax.persistence.*;
 import java.time.LocalDateTime;
 
+/**
+ * Class contains entity of comment
+ */
 @Entity
 @Table(name = "ads_comment")
 public class AdsComment {
@@ -28,7 +31,7 @@ public class AdsComment {
 
     @ManyToOne(cascade = {
             CascadeType.DETACH, CascadeType.MERGE, CascadeType.PERSIST, CascadeType.REFRESH})
-//    @JoinColumn(name = "site_user_details_id")
+    @JoinColumn(name = "site_user_details_id")
     private SiteUserDetails siteUserDetails;
 
     public AdsComment() {

@@ -7,9 +7,13 @@ import org.springframework.stereotype.Service;
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
 
+/**
+ * Class implements methods for converting ads comment entity to ads comment dto and back again
+ */
 @Service
 public class AdsCommentMapperImpl implements AdsCommentMapper{
 
+//    method converts from ads comment entity to ads comment dto
     @Override
     public AdsCommentDto fromAdsCommentToAdsCommentDto(AdsComment adsComment) {
         AdsCommentDto adsCommentDto = new AdsCommentDto();
@@ -20,6 +24,7 @@ public class AdsCommentMapperImpl implements AdsCommentMapper{
         return adsCommentDto;
     }
 
+//    method converts from ads comment dto to ads comment entity
     @Override
     public AdsComment fromAdsCommentDtoToAdsComment(AdsCommentDto dto, AdsComment comment) {
         if (dto.getText() != null) {

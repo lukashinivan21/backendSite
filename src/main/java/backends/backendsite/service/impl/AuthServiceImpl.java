@@ -14,6 +14,9 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.provisioning.UserDetailsManager;
 import org.springframework.stereotype.Service;
 
+/**
+ * Class implements methods for user's registration and authorization of access
+ */
 @Service
 public class AuthServiceImpl implements AuthService {
 
@@ -30,6 +33,7 @@ public class AuthServiceImpl implements AuthService {
         this.siteUserRepository = siteUserRepository;
     }
 
+    //    Method for authorization of access
     @Override
     public boolean login(String username, String password) {
         if (!manager.userExists(username)) {
@@ -43,6 +47,7 @@ public class AuthServiceImpl implements AuthService {
         return passwordEncoder.matches(password, encryptedPassword);
     }
 
+    //    Method for registration new user
     @Override
     public boolean register(RegisterReq registerReq, Role role) {
         if (manager.userExists(registerReq.getUsername())) {
@@ -69,12 +74,5 @@ public class AuthServiceImpl implements AuthService {
             return true;
         }
     }
-
-
-    //                    User.withDefaultPasswordEncoder()
-//                            .password(registerReq.getPassword())
-//                            .username(registerReq.getUsername())
-//                            .roles(role.name())
-//                            .build()
 
 }

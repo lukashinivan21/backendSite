@@ -5,22 +5,17 @@ import backends.backendsite.entities.SiteUserDetails;
 import backends.backendsite.entities.SiteUser;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.security.core.userdetails.User;
-import org.springframework.security.core.userdetails.UserDetails;
-import org.springframework.security.provisioning.UserDetailsManager;
 import org.springframework.stereotype.Service;
 
+/**
+ * Class implements methods for converting site user entity to user dto and back again
+ */
 @Service
 public class UserMapperImpl implements UserMapper {
 
     Logger logger = LoggerFactory.getLogger(UserMapperImpl.class);
 
-//    private final UserDetailsManager manager;
-//
-//    public UserMapperImpl(UserDetailsManager manager) {
-//        this.manager = manager;
-//    }
-
+//    method converts from user dto to site user entity and site user details entity
     @Override
     public SiteUser fromUserDtoToSiteUser(SiteUser siteUser, UserDto userDto) {
         SiteUserDetails userDetails = siteUser.getSiteUserDetails();
@@ -36,18 +31,11 @@ public class UserMapperImpl implements UserMapper {
             logger.info("Change phone from {} to {}", siteUser.getSiteUserDetails().getPhone(), userDto.getPhone());
             userDetails.setPhone(userDto.getPhone());
         }
-//        if (userDto.getEmail() != null) {
-//            logger.info("Change email from {} to {}", siteUser.getUsername(), userDto.getEmail());
-//            siteUser.getAuthority().setUsername(userDto.getEmail());
-//            UserDetails oldDetails = manager.loadUserByUsername(siteUser.getUsername());
-//            UserDetails newDetails = new User(userDto.getEmail(), oldDetails.getPassword(), oldDetails.getAuthorities());
-//            manager.updateUser(newDetails);
-//            siteUser.setUsername(userDto.getEmail());
-//        }
         siteUser.setSiteUserDetails(userDetails);
         return siteUser;
     }
 
+//    method converts from site user details entity to user dto
     @Override
     public UserDto fromSiteUserToUserDto(SiteUserDetails user) {
         UserDto userDto = new UserDto();

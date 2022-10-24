@@ -4,11 +4,11 @@ import backends.backendsite.entities.Image;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
-import java.util.List;
-
+/**
+ * Repository for interaction with database and table stored data about images
+ */
 @Repository
 public interface ImageRepository extends JpaRepository<Image, Integer> {
 
-    List<Image> findImagesByAds_Id(Integer id);
 
 }

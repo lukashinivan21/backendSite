@@ -7,7 +7,8 @@ import backends.backendsite.entities.Ads;
 import backends.backendsite.entities.SiteUserDetails;
 
 /**
- * Interface including methods for converting entity ads to dto and back again
+ * Interface including methods for converting entity ads to ads dto (or full ads dto) or
+ * converting create ads dto to ads entity
  */
 public interface SelfAdsMapper {
 

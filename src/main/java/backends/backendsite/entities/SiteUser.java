@@ -2,6 +2,9 @@ package backends.backendsite.entities;
 
 import javax.persistence.*;
 
+/**
+ * Class contains entity of user
+ */
 @Entity
 @Table(name = "users")
 public class SiteUser {
@@ -17,7 +20,7 @@ public class SiteUser {
     private boolean enabled;
 
     @OneToOne(cascade = CascadeType.ALL)
-    @JoinColumn(name = "authority_username")
+//    @JoinColumn(name = "authority_username")
     private Authority authority;
 
     @OneToOne(cascade = CascadeType.ALL)
