@@ -32,7 +32,7 @@ public class Ads {
 
     @ManyToOne(cascade = {
             CascadeType.DETACH, CascadeType.MERGE, CascadeType.PERSIST, CascadeType.REFRESH})
-//    @JoinColumn(name = "site_user_details_id")
+    @JoinColumn(name = "site_user_details_id")
     private SiteUserDetails siteUserDetails;
 
     @OneToMany(mappedBy = "ads", cascade = CascadeType.ALL)

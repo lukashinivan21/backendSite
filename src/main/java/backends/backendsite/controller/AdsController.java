@@ -89,14 +89,12 @@ public class AdsController {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
         } else {
             Integer id = result.getPk();
-            imageService.uploadImage(image, email, id);
-            result.setImage(adsService.getAdsByPk(id).getImage());
+            result.setImage(imageService.uploadImage(image, email, id));
             return ResponseEntity.ok(result);
         }
     }
 
     //    there is in postman
-    //    <-----*****----->
     @Operation(summary = "Getting all ads of one authorized user by his username,price in ads (if it's indicated) and part of ad's title (if it's indicated)",
             responses = {
                     @ApiResponse(
@@ -124,8 +122,6 @@ public class AdsController {
         }
         return ResponseEntity.ok(adsMe);
     }
-//    <-----*****----->
-
 
     //    there is in postman
     @Operation(summary = "Creating new comment for ad with fixed id",
@@ -437,19 +433,37 @@ public class AdsController {
         }
         return ResponseEntity.ok(result);
     }
+//    there is in postman
 
 
-    //    there is in postman
-    @GetMapping(value = "/images/{id}", produces = {MediaType.IMAGE_PNG_VALUE})
+    @GetMapping(value = "/{image}", produces = {MediaType.IMAGE_PNG_VALUE})
     @PreAuthorize("hasAnyAuthority('ROLE_USER', 'ROLE_ADMIN')")
-    public ResponseEntity<byte[]> getImage(@PathVariable Integer id) {
-        Image image = imageService.getImageById(id);
-        if (image == null) {
+    public ResponseEntity<byte[]> getImage(@PathVariable Integer image) {
+        Image imageById = imageService.getImageById(image);
+        if (imageById == null) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
         }
         HttpHeaders headers = new HttpHeaders();
-        headers.setContentType(MediaType.parseMediaType(image.getMediaType()));
-        headers.setContentLength(image.getData().length);
-        return ResponseEntity.status(HttpStatus.OK).headers(headers).body(image.getData());
+        headers.setContentType(MediaType.parseMediaType(imageById.getMediaType()));
+        headers.setContentLength(imageById.getData().length);
+        return ResponseEntity.status(HttpStatus.OK).headers(headers).body(imageById.getData());
+    }
+
+
+    @PatchMapping(value = "/{id}/image", produces = {MediaType.IMAGE_PNG_VALUE})
+    @PreAuthorize("hasAnyAuthority('ROLE_USER', 'ROLE_ADMIN')")
+    public ResponseEntity<byte[]> updateImage(@PathVariable Integer id,
+                                              @RequestPart("image") @Valid @NotNull @NotBlank MultipartFile image) throws IOException {
+
+        Image image1 = imageService.updateImage(id, image);
+
+        if (image1 == null) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
+        }
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.parseMediaType(image1.getMediaType()));
+        headers.setContentLength(image1.getData().length);
+        return ResponseEntity.status(HttpStatus.OK).headers(headers).body(image1.getData());
     }
 }

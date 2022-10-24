@@ -2,6 +2,9 @@ package backends.backendsite.entities;
 
 import javax.persistence.*;
 
+/**
+ * Class contains entity of image
+ */
 @Entity
 @Table(name = "images")
 public class Image {

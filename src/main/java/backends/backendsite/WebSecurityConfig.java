@@ -13,6 +13,9 @@ import org.springframework.security.web.SecurityFilterChain;
 
 import javax.sql.DataSource;
 
+/**
+ * Configuration class for web security
+ */
 @Configuration
 @EnableWebSecurity
 public class WebSecurityConfig {
@@ -28,7 +31,7 @@ public class WebSecurityConfig {
     @Autowired
     private DataSource dataSource;
 
-
+//   filter of access to controller's methods
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity security) throws Exception {
         security

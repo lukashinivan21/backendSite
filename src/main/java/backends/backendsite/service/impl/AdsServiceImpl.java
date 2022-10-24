@@ -48,7 +48,7 @@ public class AdsServiceImpl implements AdsService {
         this.authorityRepository = authorityRepository;
     }
 
-//    method for getting all ads from database
+    //    method for getting all ads from database
     @Override
     public ResponseWrapperDto<AdsDto> getAllAds() {
         logger.info("Request for getting all ads from data base");
@@ -70,7 +70,7 @@ public class AdsServiceImpl implements AdsService {
         return responseWrapperDto;
     }
 
-//    Method for getting all ads of one user
+    //    Method for getting all ads of one user
     @Override
     public ResponseWrapperDto<AdsDto> getAdsMe(Integer price, String title) {
         String email = SecurityContextHolder.getContext().getAuthentication().getName();
@@ -110,23 +110,18 @@ public class AdsServiceImpl implements AdsService {
     }
 
 
-//    method for creating ads
+    //    method for creating ads
     @Override
     public AdsDto addAds(CreateAdsDto adsDto, String email) {
         logger.info("Create new ad by user with username: {}", email);
-//        Optional<SiteUser> siteUser = siteUserRepository.findSiteUserByUsername(email);
-//        if (siteUser.isEmpty()) {
-//            return null;
-//        } else {
         SiteUser siteUser = siteUserRepository.findByUsername(email);
         Ads ads = selfAdsMapper.fromCreateAdsDtoToAds(adsDto);
         ads.setAuthor(siteUser.getSiteUserDetails().getId());
         ads.setSiteUserDetails(siteUser.getSiteUserDetails());
         return selfAdsMapper.fromAdsToAdsDto(adsRepository.save(ads));
-//        }
     }
 
-//     Method for creating comment for one ad
+    //     Method for creating comment for one ad
     @Override
     public AdsCommentDto addAdsComment(Integer adPk, String text) {
         String username = SecurityContextHolder.getContext().getAuthentication().getName();
@@ -147,7 +142,7 @@ public class AdsServiceImpl implements AdsService {
     }
 
 
-//    Method for getting all comments of one ad
+    //    Method for getting all comments of one ad
     @Override
     public ResponseWrapperDto<AdsCommentDto> getAdsComments(Integer adPk) {
         logger.info("Request for getting all comments of ad with id {}", adPk);
@@ -164,7 +159,7 @@ public class AdsServiceImpl implements AdsService {
     }
 
 
-//     Method for getting one comment of ad by ad id and comment id
+    //     Method for getting one comment of ad by ad id and comment id
     @Override
     public AdsCommentDto getAdsComment(Integer adPk, Integer id) {
         logger.info("Request for getting information about comment with id: {} of ads with id: {}", id, adPk);
@@ -183,7 +178,7 @@ public class AdsServiceImpl implements AdsService {
     }
 
 
-//    Method remove ad by id
+    //    Method remove ad by id
     @Override
     public String removeAds(Integer id) {
         String email = SecurityContextHolder.getContext().getAuthentication().getName();
@@ -204,7 +199,7 @@ public class AdsServiceImpl implements AdsService {
     }
 
 
-//     Method remove one comment of ad by ad id and comment id
+    //     Method remove one comment of ad by ad id and comment id
     @Override
     public String deleteAdsComment(Integer adPk, Integer id) {
         String email = SecurityContextHolder.getContext().getAuthentication().getName();
@@ -230,7 +225,7 @@ public class AdsServiceImpl implements AdsService {
     }
 
 
-//    Method for getting full info about ad by id
+    //    Method for getting full info about ad by id
     @Override
     public FullAdsDto getAds(Integer id) {
         String email = SecurityContextHolder.getContext().getAuthentication().getName();
@@ -252,7 +247,7 @@ public class AdsServiceImpl implements AdsService {
     }
 
 
-//    Method for updating ad
+    //    Method for updating ad
     @Override
     public AdsDto updateAds(Integer id, AdsDto adsDto) {
         String username = SecurityContextHolder.getContext().getAuthentication().getName();
@@ -274,7 +269,7 @@ public class AdsServiceImpl implements AdsService {
     }
 
 
-//    Method for updating comment
+    //    Method for updating comment
     @Override
     public AdsCommentDto updateAdsComment(Integer adPk, Integer id, AdsCommentDto commentDto) {
         String email = SecurityContextHolder.getContext().getAuthentication().getName();
@@ -302,7 +297,7 @@ public class AdsServiceImpl implements AdsService {
     }
 
 
-//    Method for getting comments containing text
+    //    Method for getting comments containing text
     @Override
     public ResponseWrapperDto<AdsCommentDto> getCommentWithText(String text) {
         List<AdsComment> result = adsCommentRepository.findAdsCommentsByTextContains(text);
@@ -318,7 +313,7 @@ public class AdsServiceImpl implements AdsService {
     }
 
 
-//     Method for getting ads with title containing text
+    //     Method for getting ads with title containing text
     @Override
     public ResponseWrapperDto<AdsDto> getAdsWithTitleContainsText(String text) {
         List<Ads> adsList = adsRepository.findAdsByTitleContains(text);
@@ -333,10 +328,4 @@ public class AdsServiceImpl implements AdsService {
         }
     }
 
-
-//    Method for getting ad by id
-    @Override
-    public Ads getAdsByPk(Integer pk) {
-        return adsRepository.findAdsById(pk);
-    }
 }

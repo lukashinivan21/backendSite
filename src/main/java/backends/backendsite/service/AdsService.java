@@ -1,10 +1,9 @@
 package backends.backendsite.service;
 
 import backends.backendsite.dto.*;
-import backends.backendsite.entities.Ads;
 
 /**
- * Interface including methods for working with ads and comments
+ * Interface including methods for working with entity ads and ads comment
  */
 public interface AdsService {
 
@@ -85,12 +84,6 @@ public interface AdsService {
      * @return ResponseWrapperDto
      */
     ResponseWrapperDto<AdsDto> getAdsWithTitleContainsText(String text);
-
-    /**
-     * Method for getting ad by id
-     * @return Ads
-     */
-    Ads getAdsByPk(Integer pk);
 
 
 
