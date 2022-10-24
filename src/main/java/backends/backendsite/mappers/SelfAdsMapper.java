@@ -6,6 +6,9 @@ import backends.backendsite.dto.FullAdsDto;
 import backends.backendsite.entities.Ads;
 import backends.backendsite.entities.SiteUserDetails;
 
+/**
+ * Interface including methods for converting entity ads to dto and back again
+ */
 public interface SelfAdsMapper {
 
     Ads fromAdsDtoToAds(AdsDto adsDto, Ads ads);

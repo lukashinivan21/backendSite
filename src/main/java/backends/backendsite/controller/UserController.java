@@ -6,13 +6,11 @@ import backends.backendsite.dto.UserDto;
 import backends.backendsite.service.UserService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.annotation.Secured;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
-import static backends.backendsite.service.StringConstants.HAVE_NOT;
+import static backends.backendsite.service.StringConstants.NOT_ACCESS;
 
 @RestController
 @RequestMapping("/users")
@@ -26,31 +24,31 @@ public class UserController {
     }
 
     @GetMapping("/me")
-    @PreAuthorize("hasAuthority('ROLE_ADMIN')")
+    @PreAuthorize("hasAnyAuthority('ROLE_USER','ROLE_ADMIN')")
     public ResponseEntity<ResponseWrapperDto<UserDto>> getUsers() {
         ResponseWrapperDto<UserDto> result = userService.getUsers();
         return ResponseEntity.ok(result);
     }
 
     @PatchMapping("/me")
-    @PreAuthorize("hasAnyAuthority('ROLE_USER', 'ROLE_ADMIN')")
+    @PreAuthorize("isAuthenticated()")
     public ResponseEntity<UserDto> updateUser(@RequestBody UserDto user) {
         String email = SecurityContextHolder.getContext().getAuthentication().getName();
         UserDto result = userService.updateUser(user, email);
-        if (result == null) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
-        }
+//        if (result == null) {
+//            return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
+//        }
         return ResponseEntity.ok(result);
     }
 
     @PostMapping("/set_password")
-    @PreAuthorize("hasAnyAuthority('ROLE_USER', 'ROLE_ADMIN')")
+    @PreAuthorize("isAuthenticated()")
     public ResponseEntity<NewPasswordDto> setPassword(@RequestBody NewPasswordDto password) {
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        NewPasswordDto result = userService.setPassword(password, authentication.getName());
-        if (result == null) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
-        }
+        String email = SecurityContextHolder.getContext().getAuthentication().getName();
+        NewPasswordDto result = userService.setPassword(password, email);
+//        if (result == null) {
+//            return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
+//        }
         return ResponseEntity.ok(result);
     }
 
@@ -61,7 +59,7 @@ public class UserController {
         if (result == null) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
         }
-        if (result.getFirstName().equals(HAVE_NOT)) {
+        if (result.getFirstName().equals(NOT_ACCESS)) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
         }
         return ResponseEntity.ok(result);

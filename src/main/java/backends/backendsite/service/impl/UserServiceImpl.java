@@ -16,9 +16,9 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 import static backends.backendsite.service.StringConstants.*;
 
@@ -47,46 +47,41 @@ public class UserServiceImpl implements UserService {
         String email = SecurityContextHolder.getContext().getAuthentication().getName();
         String role = authorityRepository.findAuthorityByUsername(email).getAuthority();
         logger.info("Request for getting list of all users from userName: {}, with role: {}", email, role);
-//        if (role.equals("ROLE_USER")) {
-//            return null;
-//        } else {
-            List<SiteUserDetails> siteUsers = detailsRepository.findAll();
-            List<UserDto> result = new ArrayList<>();
-            for (SiteUserDetails user : siteUsers) {
-                result.add(userMapper.fromSiteUserToUserDto(user));
-            }
-            ResponseWrapperDto<UserDto> responseWrapperDto = new ResponseWrapperDto<>();
-            responseWrapperDto.setList(result);
-            responseWrapperDto.setCount(result.size());
-            return responseWrapperDto;
+        List<UserDto> siteUsers = detailsRepository.findAll().stream().map(userMapper::fromSiteUserToUserDto).collect(Collectors.toList());
+//        if (role.equals(USER)) {
+//            siteUsers = siteUsers.stream().filter(userDto -> userDto.getEmail().equals(email)).collect(Collectors.toList());
 //        }
+        ResponseWrapperDto<UserDto> responseWrapperDto = new ResponseWrapperDto<>();
+        responseWrapperDto.setResults(siteUsers);
+        responseWrapperDto.setCount(siteUsers.size());
+        return responseWrapperDto;
     }
 
     @Override
     public UserDto updateUser(UserDto userDTO, String email) {
         String role = authorityRepository.findAuthorityByUsername(email).getAuthority();
         logger.info("Request for updating user with username: {}, with role: {}", email, role);
-        Optional<SiteUser> userOptional = siteUserRepository.findSiteUserByUsername(email);
-        if (userOptional.isEmpty()) {
-            logger.info("There are not user with username {} in list of users", email);
-            return null;
-        } else {
-            SiteUser siteUser = userOptional.get();
+//        Optional<SiteUser> userOptional = siteUserRepository.findSiteUserByUsername(email);
+//        if (userOptional.isEmpty()) {
+//            logger.info("There are not user with username {} in list of users", email);
+//            return null;
+//        } else {
+            SiteUser siteUser = siteUserRepository.findByUsername(email);
             SiteUser user = userMapper.fromUserDtoToSiteUser(siteUser, userDTO);
             logger.info("Changes are finished");
             SiteUser result = siteUserRepository.save(user);
             return userMapper.fromSiteUserToUserDto(result.getSiteUserDetails());
-        }
+//        }
     }
 
     @Override
     public NewPasswordDto setPassword(NewPasswordDto password, String email) {
-        Optional<SiteUser> userOptional = siteUserRepository.findSiteUserByUsername(email);
-        if (userOptional.isEmpty()) {
-            logger.info("Пользователя с таким email: *** \"{}\" *** нет.", email);
-            return null;
-        } else {
-            SiteUser result = userOptional.get();
+//        Optional<SiteUser> userOptional = siteUserRepository.findSiteUserByUsername(email);
+//        if (userOptional.isEmpty()) {
+//            logger.info("Пользователя с таким email: *** \"{}\" *** нет.", email);
+//            return null;
+//        } else {
+            SiteUser result = siteUserRepository.findByUsername(email);
             logger.info("Request for change password of user: \"{}\" from email: {}", result.getUsername(), email);
             if (!passwordEncoder.matches(password.getCurrentPassword(), result.getPassword())) {
                 logger.info("Введеный пароль: {} не соответствует текущему паролю: {}. Изменение пароля запрещено", password.getCurrentPassword(), result.getPassword());
@@ -97,7 +92,7 @@ public class UserServiceImpl implements UserService {
                 siteUserRepository.save(result);
                 return password;
             }
-        }
+//        }
     }
 
     @Override
@@ -113,16 +108,11 @@ public class UserServiceImpl implements UserService {
                 return userMapper.fromSiteUserToUserDto(siteUser.get());
             } else {
                 UserDto userDto = new UserDto();
-                userDto.setFirstName(HAVE_NOT);
+                userDto.setFirstName(NOT_ACCESS);
                 return userDto;
             }
         }
     }
 
-    @Override
-    public SiteUser findUserByEmail(String email) {
-        logger.info("Request for searching user with firstName {}", email);
-        Optional<SiteUser> siteUser = siteUserRepository.findSiteUserByUsername(email);
-        return siteUser.orElse(null);
-    }
+
 }

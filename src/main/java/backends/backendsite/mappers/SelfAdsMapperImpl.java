@@ -7,6 +7,9 @@ import backends.backendsite.entities.Ads;
 import backends.backendsite.entities.SiteUserDetails;
 import org.springframework.stereotype.Service;
 
+/**
+ * Class implements methods for converting entity ads to dto and back again
+ */
 @Service
 public class SelfAdsMapperImpl implements SelfAdsMapper {
 
@@ -24,8 +27,8 @@ public class SelfAdsMapperImpl implements SelfAdsMapper {
     @Override
     public AdsDto fromAdsToAdsDto(Ads ads) {
         AdsDto adsDto = new AdsDto();
-        if (ads.getPk() != null) {
-            adsDto.setPk(ads.getPk());
+        if (ads.getId() != null) {
+            adsDto.setPk(ads.getId());
         }
         if (ads.getTitle() != null) {
             adsDto.setTitle(ads.getTitle());
@@ -55,7 +58,7 @@ public class SelfAdsMapperImpl implements SelfAdsMapper {
     @Override
     public FullAdsDto mapToFullAdsDto(Ads ads, SiteUserDetails userDetails) {
         FullAdsDto result = new FullAdsDto();
-        result.setPk(ads.getPk());
+        result.setPk(ads.getId());
         result.setPrice(ads.getPrice());
         result.setTitle(ads.getTitle());
         result.setDescription(ads.getDescription());

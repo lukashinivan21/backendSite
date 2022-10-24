@@ -9,6 +9,6 @@ import java.util.List;
 @Repository
 public interface ImageRepository extends JpaRepository<Image, Integer> {
 
-    List<Image> findImagesByAds_Pk(Integer id);
+    List<Image> findImagesByAds_Id(Integer id);
 
 }

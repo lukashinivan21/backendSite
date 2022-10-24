@@ -2,7 +2,6 @@ package backends.backendsite.service.impl;
 
 import backends.backendsite.dto.RegisterReq;
 import backends.backendsite.dto.Role;
-import backends.backendsite.entities.Authority;
 import backends.backendsite.entities.SiteUser;
 import backends.backendsite.entities.SiteUserDetails;
 import backends.backendsite.repositories.SiteUserRepository;
@@ -31,7 +30,6 @@ public class AuthServiceImpl implements AuthService {
         this.siteUserRepository = siteUserRepository;
     }
 
-
     @Override
     public boolean login(String username, String password) {
         if (!manager.userExists(username)) {
@@ -59,20 +57,15 @@ public class AuthServiceImpl implements AuthService {
                             .roles(role.toString())
                             .build()
             );
-            SiteUser siteUser = siteUserRepository.findSiteUserByUsername(registerReq.getUsername()).orElseThrow();
+            SiteUser siteUser = siteUserRepository.findById(registerReq.getUsername()).orElseThrow();
             SiteUserDetails userDetails = new SiteUserDetails();
             userDetails.setFirstName(registerReq.getFirstName());
             userDetails.setLastName(registerReq.getLastName());
             userDetails.setPhone(registerReq.getPhone());
             siteUser.setSiteUserDetails(userDetails);
 
-//            Authority authority = new Authority();
-//            authority.setUsername(registerReq.getUsername());
-//            siteUser.setAuthority(authority);
-
             siteUserRepository.save(siteUser);
 
-//            userDetailsRepository.save(userDetails);
             return true;
         }
     }
