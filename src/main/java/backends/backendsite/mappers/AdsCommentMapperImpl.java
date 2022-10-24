@@ -13,7 +13,7 @@ public class AdsCommentMapperImpl implements AdsCommentMapper{
     @Override
     public AdsCommentDto fromAdsCommentToAdsCommentDto(AdsComment adsComment) {
         AdsCommentDto adsCommentDto = new AdsCommentDto();
-        adsCommentDto.setPk(adsComment.getPk());
+        adsCommentDto.setPk(adsComment.getId());
         adsCommentDto.setAuthor(adsComment.getAuthor());
         adsCommentDto.setText(adsComment.getText());
         adsCommentDto.setCreatedAt(adsComment.getCreatedAt());

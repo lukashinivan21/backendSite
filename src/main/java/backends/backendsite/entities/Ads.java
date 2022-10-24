@@ -3,6 +3,9 @@ package backends.backendsite.entities;
 import javax.persistence.*;
 import java.util.List;
 
+/**
+ * Class contains entity of ad
+ */
 @Entity
 @Table(name = "ads")
 public class Ads {
@@ -10,7 +13,7 @@ public class Ads {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "ads_pk")
-    private Integer pk;
+    private Integer id;
 
     @Column(name = "ads_author")
     private Integer author;
@@ -58,12 +61,12 @@ public class Ads {
         this.image = image;
     }
 
-    public Integer getPk() {
-        return pk;
+    public Integer getId() {
+        return id;
     }
 
-    public void setPk(Integer pk) {
-        this.pk = pk;
+    public void setId(Integer pk) {
+        this.id = pk;
     }
 
     public Integer getPrice() {

@@ -9,6 +9,9 @@ import org.springframework.web.servlet.config.annotation.EnableWebMvc;
 
 import javax.sql.DataSource;
 
+/**
+ * Configuration class for creating bean data source
+ */
 @Configuration
 @EnableWebMvc
 @ComponentScan(basePackages = {"backends"})

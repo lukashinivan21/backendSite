@@ -9,7 +9,7 @@ import java.util.List;
 @Repository
 public interface AdsCommentRepository extends JpaRepository<AdsComment, Integer> {
 
-    List<AdsComment> findAdsCommentsByAds_Pk(Integer pk);
+    List<AdsComment> findAdsCommentsByAds_Id(Integer pk);
 
     List<AdsComment> findAdsCommentsByTextContains(String text);
 

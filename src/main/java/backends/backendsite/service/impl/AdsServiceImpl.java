@@ -18,13 +18,14 @@ import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 import java.util.stream.Collectors;
 
 import static backends.backendsite.service.StringConstants.*;
 
+/**
+ * Class implements methods for working with ads and comments
+ */
 @Service
 public class AdsServiceImpl implements AdsService {
 
@@ -47,46 +48,85 @@ public class AdsServiceImpl implements AdsService {
         this.authorityRepository = authorityRepository;
     }
 
+//    method for getting all ads from database
     @Override
     public ResponseWrapperDto<AdsDto> getAllAds() {
         logger.info("Request for getting all ads from data base");
         List<Ads> adsList = adsRepository.findAll();
+        if (adsList.isEmpty()) {
+            List<AdsDto> list = new ArrayList<>();
+            ResponseWrapperDto<AdsDto> result = new ResponseWrapperDto<>();
+            result.setResults(list);
+            result.setCount(list.size());
+            return result;
+        }
         List<AdsDto> adsDtoList = new ArrayList<>();
         for (Ads ads : adsList) {
             adsDtoList.add(selfAdsMapper.fromAdsToAdsDto(ads));
         }
         ResponseWrapperDto<AdsDto> responseWrapperDto = new ResponseWrapperDto<>();
-        responseWrapperDto.setList(adsDtoList);
+        responseWrapperDto.setResults(adsDtoList);
         responseWrapperDto.setCount(adsDtoList.size());
         return responseWrapperDto;
     }
 
+//    Method for getting all ads of one user
     @Override
-    public ResponseWrapperDto<AdsDto> getAdsMe(Integer price, String title, SiteUser user) {
-        logger.info("Request for getting all ads of user with id {}", user.getSiteUserDetails().getId());
-        List<Ads> adsMe = adsRepository.findByAuthorAndPriceAndTitle(user.getSiteUserDetails().getId(), price, title);
-        List<AdsDto> result = adsMe.stream().map(selfAdsMapper::fromAdsToAdsDto).collect(Collectors.toList());
-        ResponseWrapperDto<AdsDto> responseWrapperDto = new ResponseWrapperDto<>();
-        responseWrapperDto.setList(result);
-        responseWrapperDto.setCount(result.size());
-        return responseWrapperDto;
-    }
-
-
-    @Override
-    public AdsDto addAds(CreateAdsDto adsDto, String email) {
-        logger.info("Create new ad by user with username: {}", email);
-        Optional<SiteUser> siteUser = siteUserRepository.findSiteUserByUsername(email);
-        if (siteUser.isEmpty()) {
-            return null;
+    public ResponseWrapperDto<AdsDto> getAdsMe(Integer price, String title) {
+        String email = SecurityContextHolder.getContext().getAuthentication().getName();
+        logger.info("Request for getting all ads of user with username {}", email);
+        Optional<SiteUser> optionalSiteUser = siteUserRepository.findSiteUserByUsername(email);
+        if (optionalSiteUser.isPresent()) {
+            Integer idUser = optionalSiteUser.get().getSiteUserDetails().getId();
+            List<AdsDto> list = adsRepository.findAdsBySiteUserDetailsId(idUser)
+                    .stream()
+                    .map(selfAdsMapper::fromAdsToAdsDto)
+                    .collect(Collectors.toList());
+            if (price != null && title == null) {
+                list = adsRepository.findAllBySiteUserDetailsIdAndPrice(idUser, price)
+                        .stream()
+                        .map(selfAdsMapper::fromAdsToAdsDto)
+                        .collect(Collectors.toList());
+            }
+            if (title != null && price == null) {
+                list = adsRepository.findAllBySiteUserDetailsIdAndTitleContains(idUser, title)
+                        .stream()
+                        .map(selfAdsMapper::fromAdsToAdsDto)
+                        .collect(Collectors.toList());
+            }
+            if (title != null && price != null) {
+                list = adsRepository.findAllBySiteUserDetailsIdAndPriceAndTitleContains(idUser, price, title)
+                        .stream()
+                        .map(selfAdsMapper::fromAdsToAdsDto)
+                        .collect(Collectors.toList());
+            }
+            ResponseWrapperDto<AdsDto> responseWrapperDto = new ResponseWrapperDto<>();
+            responseWrapperDto.setResults(list);
+            responseWrapperDto.setCount(list.size());
+            return responseWrapperDto;
         } else {
-            Ads ads = selfAdsMapper.fromCreateAdsDtoToAds(adsDto);
-            ads.setAuthor(siteUser.get().getSiteUserDetails().getId());
-            ads.setSiteUserDetails(siteUser.get().getSiteUserDetails());
-            return selfAdsMapper.fromAdsToAdsDto(adsRepository.save(ads));
+            return null;
         }
     }
 
+
+//    method for creating ads
+    @Override
+    public AdsDto addAds(CreateAdsDto adsDto, String email) {
+        logger.info("Create new ad by user with username: {}", email);
+//        Optional<SiteUser> siteUser = siteUserRepository.findSiteUserByUsername(email);
+//        if (siteUser.isEmpty()) {
+//            return null;
+//        } else {
+        SiteUser siteUser = siteUserRepository.findByUsername(email);
+        Ads ads = selfAdsMapper.fromCreateAdsDtoToAds(adsDto);
+        ads.setAuthor(siteUser.getSiteUserDetails().getId());
+        ads.setSiteUserDetails(siteUser.getSiteUserDetails());
+        return selfAdsMapper.fromAdsToAdsDto(adsRepository.save(ads));
+//        }
+    }
+
+//     Method for creating comment for one ad
     @Override
     public AdsCommentDto addAdsComment(Integer adPk, String text) {
         String username = SecurityContextHolder.getContext().getAuthentication().getName();
@@ -95,59 +135,55 @@ public class AdsServiceImpl implements AdsService {
         if (adsOptional.isEmpty()) {
             return null;
         } else {
-            Optional<SiteUser> siteUser = siteUserRepository.findSiteUserByUsername(username);
-            if (siteUser.isPresent()) {
-                AdsComment result = new AdsComment();
-                result.setSiteUserDetails(siteUser.get().getSiteUserDetails());
-                result.setAds(adsOptional.get());
-                result.setAuthor(siteUser.get().getSiteUserDetails().getId());
-                result.setText(text);
-                result.setCreatedAt(LocalDateTime.now().truncatedTo(ChronoUnit.SECONDS));
-                return commentMapper.fromAdsCommentToAdsCommentDto(adsCommentRepository.save(result));
-            } else {
-                return null;
-            }
+            SiteUser siteUser = siteUserRepository.findByUsername(username);
+            AdsComment result = new AdsComment();
+            result.setSiteUserDetails(siteUser.getSiteUserDetails());
+            result.setAds(adsOptional.get());
+            result.setAuthor(siteUser.getSiteUserDetails().getId());
+            result.setText(text);
+            result.setCreatedAt(LocalDateTime.now().truncatedTo(ChronoUnit.SECONDS));
+            return commentMapper.fromAdsCommentToAdsCommentDto(adsCommentRepository.save(result));
         }
     }
 
+
+//    Method for getting all comments of one ad
     @Override
     public ResponseWrapperDto<AdsCommentDto> getAdsComments(Integer adPk) {
         logger.info("Request for getting all comments of ad with id {}", adPk);
-        List<AdsComment> list = adsCommentRepository.findAdsCommentsByAds_Pk(adPk);
+        List<AdsComment> list = adsCommentRepository.findAdsCommentsByAds_Id(adPk);
         if (list.isEmpty()) {
             return null;
         } else {
             List<AdsCommentDto> result = list.stream().map(commentMapper::fromAdsCommentToAdsCommentDto).collect(Collectors.toList());
             ResponseWrapperDto<AdsCommentDto> responseWrapperDto = new ResponseWrapperDto<>();
-            responseWrapperDto.setList(result);
+            responseWrapperDto.setResults(result);
             responseWrapperDto.setCount(result.size());
             return responseWrapperDto;
         }
     }
 
+
+//     Method for getting one comment of ad by ad id and comment id
     @Override
     public AdsCommentDto getAdsComment(Integer adPk, Integer id) {
         logger.info("Request for getting information about comment with id: {} of ads with id: {}", id, adPk);
         Optional<Ads> optionalAds = adsRepository.findById(adPk);
         if (optionalAds.isEmpty()) {
             return null;
-        }
-        List<Integer> idsOfComments = adsCommentRepository.findAdsCommentsByAds_Pk(adPk)
-                .stream()
-                .map(AdsComment::getPk)
-                .collect(Collectors.toList());
-        if (!idsOfComments.contains(id)) {
-            return null;
-        }
-        Optional<AdsComment> optionalAdsComment = adsCommentRepository.findById(id);
-        if (optionalAdsComment.isEmpty()) {
-            return null;
         } else {
-            return commentMapper.fromAdsCommentToAdsCommentDto(optionalAdsComment.get());
+            List<AdsComment> commentList = optionalAds.get().getComments();
+            Optional<AdsComment> optionalAdsComment = adsCommentRepository.findById(id);
+            if (optionalAdsComment.isEmpty() || commentList.isEmpty() || !commentList.contains(optionalAdsComment.get())) {
+                return null;
+            } else {
+                return commentMapper.fromAdsCommentToAdsCommentDto(optionalAdsComment.get());
+            }
         }
     }
 
 
+//    Method remove ad by id
     @Override
     public String removeAds(Integer id) {
         String email = SecurityContextHolder.getContext().getAuthentication().getName();
@@ -159,7 +195,7 @@ public class AdsServiceImpl implements AdsService {
         } else {
             Ads deletedAds = ads.get();
             if (role.equals(USER) && !deletedAds.getSiteUserDetails().getSiteUser().getUsername().equals(email)) {
-                return HAVE_NOT;
+                return NOT_ACCESS;
             } else {
                 adsRepository.delete(deletedAds);
                 return SUCCESS;
@@ -168,6 +204,7 @@ public class AdsServiceImpl implements AdsService {
     }
 
 
+//     Method remove one comment of ad by ad id and comment id
     @Override
     public String deleteAdsComment(Integer adPk, Integer id) {
         String email = SecurityContextHolder.getContext().getAuthentication().getName();
@@ -175,29 +212,25 @@ public class AdsServiceImpl implements AdsService {
         logger.info("Request from user with username: \"{}\" for deleting comment with id: {}", email, id);
         Optional<Ads> adsOptional = adsRepository.findById(adPk);
         if (adsOptional.isEmpty()) {
-            return null;
-        }
-        List<Integer> idsOfAdsCommentList = adsCommentRepository.findAdsCommentsByAds_Pk(adPk)
-                .stream()
-                .map(AdsComment::getPk)
-                .collect(Collectors.toList());
-        if (!idsOfAdsCommentList.contains(id)) {
-            return null;
-        }
-        Optional<AdsComment> optionalAdsComment = adsCommentRepository.findById(id);
-        if (optionalAdsComment.isEmpty()) {
-            return null;
+            return NOT_FOUND;
         } else {
-            if (role.equals(USER) && !optionalAdsComment.get().getSiteUserDetails().getSiteUser().getUsername().equals(email)) {
-                return HAVE_NOT;
+            List<AdsComment> commentList = adsOptional.get().getComments();
+            Optional<AdsComment> optionalAdsComment = adsCommentRepository.findById(id);
+            if (commentList.isEmpty() || optionalAdsComment.isEmpty() || !commentList.contains(optionalAdsComment.get())) {
+                return NOT_FOUND;
             } else {
-                adsCommentRepository.delete(optionalAdsComment.get());
-                return SUCCESS;
+                if (role.equals(USER) && !optionalAdsComment.get().getSiteUserDetails().getSiteUser().getUsername().equals(email)) {
+                    return NOT_ACCESS;
+                } else {
+                    adsCommentRepository.delete(optionalAdsComment.get());
+                    return SUCCESS;
+                }
             }
         }
     }
 
 
+//    Method for getting full info about ad by id
     @Override
     public FullAdsDto getAds(Integer id) {
         String email = SecurityContextHolder.getContext().getAuthentication().getName();
@@ -210,7 +243,7 @@ public class AdsServiceImpl implements AdsService {
             Ads result = adsOptional.get();
             if (role.equals(USER) && !result.getSiteUserDetails().getSiteUser().getUsername().equals(email)) {
                 FullAdsDto fullAdsDto = new FullAdsDto();
-                fullAdsDto.setTitle(HAVE_NOT);
+                fullAdsDto.setTitle(NOT_ACCESS);
                 return fullAdsDto;
             } else {
                 return selfAdsMapper.mapToFullAdsDto(result, result.getSiteUserDetails());
@@ -218,6 +251,8 @@ public class AdsServiceImpl implements AdsService {
         }
     }
 
+
+//    Method for updating ad
     @Override
     public AdsDto updateAds(Integer id, AdsDto adsDto) {
         String username = SecurityContextHolder.getContext().getAuthentication().getName();
@@ -238,26 +273,36 @@ public class AdsServiceImpl implements AdsService {
         }
     }
 
+
+//    Method for updating comment
     @Override
     public AdsCommentDto updateAdsComment(Integer adPk, Integer id, AdsCommentDto commentDto) {
         String email = SecurityContextHolder.getContext().getAuthentication().getName();
         String role = authorityRepository.findAuthorityByUsername(email).getAuthority();
         logger.info("Request from user with username: \"{}\" for updating comment with id {}", email, id);
-        Optional<AdsComment> optionalAdsComment = adsCommentRepository.findById(id);
-        if (optionalAdsComment.isEmpty()) {
+        Optional<Ads> adsOptional = adsRepository.findById(adPk);
+        if (adsOptional.isEmpty()) {
             return null;
         } else {
-            if (role.equals(USER) && !optionalAdsComment.get().getSiteUserDetails().getSiteUser().getUsername().equals(email)) {
-                AdsCommentDto answer = new AdsCommentDto();
-                answer.setText(NOT_ACCESS);
-                return answer;
+            List<AdsComment> commentList = adsOptional.get().getComments();
+            Optional<AdsComment> optionalAdsComment = adsCommentRepository.findById(id);
+            if (commentList.isEmpty() || optionalAdsComment.isEmpty() || !commentList.contains(optionalAdsComment.get())) {
+                return null;
             } else {
-                AdsComment result = commentMapper.fromAdsCommentDtoToAdsComment(commentDto, optionalAdsComment.get());
-                return commentMapper.fromAdsCommentToAdsCommentDto(adsCommentRepository.save(result));
+                if (role.equals(USER) && !optionalAdsComment.get().getSiteUserDetails().getSiteUser().getUsername().equals(email)) {
+                    AdsCommentDto answer = new AdsCommentDto();
+                    answer.setText(NOT_ACCESS);
+                    return answer;
+                } else {
+                    AdsComment result = commentMapper.fromAdsCommentDtoToAdsComment(commentDto, optionalAdsComment.get());
+                    return commentMapper.fromAdsCommentToAdsCommentDto(adsCommentRepository.save(result));
+                }
             }
         }
     }
 
+
+//    Method for getting comments containing text
     @Override
     public ResponseWrapperDto<AdsCommentDto> getCommentWithText(String text) {
         List<AdsComment> result = adsCommentRepository.findAdsCommentsByTextContains(text);
@@ -266,12 +311,14 @@ public class AdsServiceImpl implements AdsService {
         } else {
             List<AdsCommentDto> list = result.stream().map(commentMapper::fromAdsCommentToAdsCommentDto).collect(Collectors.toList());
             ResponseWrapperDto<AdsCommentDto> responseWrapperDto = new ResponseWrapperDto<>();
-            responseWrapperDto.setList(list);
+            responseWrapperDto.setResults(list);
             responseWrapperDto.setCount(list.size());
             return responseWrapperDto;
         }
     }
 
+
+//     Method for getting ads with title containing text
     @Override
     public ResponseWrapperDto<AdsDto> getAdsWithTitleContainsText(String text) {
         List<Ads> adsList = adsRepository.findAdsByTitleContains(text);
@@ -280,14 +327,16 @@ public class AdsServiceImpl implements AdsService {
         } else {
             List<AdsDto> list = adsList.stream().map(selfAdsMapper::fromAdsToAdsDto).collect(Collectors.toList());
             ResponseWrapperDto<AdsDto> result = new ResponseWrapperDto<>();
-            result.setList(list);
+            result.setResults(list);
             result.setCount(list.size());
             return result;
         }
     }
 
+
+//    Method for getting ad by id
     @Override
     public Ads getAdsByPk(Integer pk) {
-        return adsRepository.findAdsByPk(pk);
+        return adsRepository.findAdsById(pk);
     }
 }

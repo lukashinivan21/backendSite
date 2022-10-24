@@ -1,14 +1,11 @@
 package backends.backendsite.dto;
 
-import lombok.Getter;
-import lombok.Setter;
-
 import java.util.List;
 
 public class ResponseWrapperDto<T> {
 
     private Integer count;
-    private List<T> list;
+    private List<T> results;
 
     public Integer getCount() {
         return count;
@@ -18,11 +15,11 @@ public class ResponseWrapperDto<T> {
         this.count = count;
     }
 
-    public List<T> getList() {
-        return list;
+    public List<T> getResults() {
+        return results;
     }
 
-    public void setList(List<T> list) {
-        this.list = list;
+    public void setResults(List<T> results) {
+        this.results = results;
     }
 }

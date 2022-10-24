@@ -10,7 +10,7 @@ public class AdsComment {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "ads_comment_pk")
-    private Integer pk;
+    private Integer id;
 
     @Column(name = "comment_author")
     private Integer author;
@@ -35,12 +35,12 @@ public class AdsComment {
 
     }
 
-    public Integer getPk() {
-        return pk;
+    public Integer getId() {
+        return id;
     }
 
-    public void setPk(Integer pk) {
-        this.pk = pk;
+    public void setId(Integer pk) {
+        this.id = pk;
     }
 
     public Integer getAuthor() {
