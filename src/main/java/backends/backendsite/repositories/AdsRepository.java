@@ -13,12 +13,6 @@ import java.util.List;
 public interface AdsRepository extends JpaRepository<Ads, Integer> {
 
     /**
-     * search one ad by id
-     * @return Ads
-     */
-    Ads findAdsById(Integer id);
-
-    /**
      * search list ads by id their owner
      * @return List<Ads></Ads>
      */

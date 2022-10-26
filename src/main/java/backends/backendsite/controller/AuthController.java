@@ -3,12 +3,14 @@ package backends.backendsite.controller;
 import backends.backendsite.dto.LoginReq;
 import backends.backendsite.dto.RegisterReq;
 import backends.backendsite.dto.ResponseWrapperDto;
+import backends.backendsite.dto.Role;
+import backends.backendsite.exceptionsHandler.exceptions.NotLoginException;
+import backends.backendsite.exceptionsHandler.exceptions.UserAlreadyExistException;
 import backends.backendsite.service.AuthService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.CrossOrigin;
@@ -47,7 +49,7 @@ public class AuthController {
         if (authService.login(req.getUsername(), req.getPassword())) {
             return ResponseEntity.ok().build();
         } else {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+            throw new NotLoginException();
         }
     }
 
@@ -70,7 +72,7 @@ public class AuthController {
         if (authService.register(req, USER)) {
             return ResponseEntity.ok().build();
         } else {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
+            throw new UserAlreadyExistException();
         }
     }
 

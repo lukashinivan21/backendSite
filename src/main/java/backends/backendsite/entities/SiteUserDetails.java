@@ -26,7 +26,6 @@ public class SiteUserDetails {
     private String phone;
 
     @OneToOne(mappedBy = "siteUserDetails", cascade = CascadeType.ALL)
-//    @JoinColumn(name = "username_of_user")
     private SiteUser siteUser;
 
     @OneToMany(mappedBy = "siteUserDetails", cascade = CascadeType.ALL)

@@ -8,14 +8,12 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
-import static backends.backendsite.service.StringConstants.NOT_ACCESS;
 
 @RestController
 @RequestMapping("/users")
@@ -69,6 +67,10 @@ public class UserController {
                             content = @Content(
                                     mediaType = MediaType.APPLICATION_JSON_VALUE,
                                     schema = @Schema(implementation = NewPasswordDto.class))),
+                    @ApiResponse(
+                            responseCode = "400",
+                            description = "Check entered password"
+                    )
             })
     @PostMapping("/set_password")
     @PreAuthorize("hasAnyAuthority('ROLE_USER','ROLE_ADMIN')")
@@ -99,12 +101,6 @@ public class UserController {
     @PreAuthorize("hasAnyAuthority('ROLE_USER', 'ROLE_ADMIN')")
     public ResponseEntity<UserDto> getUser(@PathVariable Integer id) {
         UserDto result = userService.getUser(id);
-        if (result == null) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
-        }
-        if (result.getFirstName().equals(NOT_ACCESS)) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
-        }
         return ResponseEntity.ok(result);
     }
 

@@ -2,6 +2,9 @@ package backends.backendsite.service.impl;
 
 import backends.backendsite.entities.Ads;
 import backends.backendsite.entities.Image;
+import backends.backendsite.exceptionsHandler.exceptions.ImageNotFoundException;
+import backends.backendsite.exceptionsHandler.exceptions.NotAccessActionException;
+import backends.backendsite.exceptionsHandler.exceptions.ServerErrorException;
 import backends.backendsite.repositories.AdsRepository;
 import backends.backendsite.repositories.AuthorityRepository;
 import backends.backendsite.repositories.ImageRepository;
@@ -46,7 +49,7 @@ public class ImageServiceImpl implements ImageService {
         this.authorityRepository = authorityRepository;
     }
 
-//    Method for uploading image of new ad
+    //    Method for uploading image of new ad
     @Override
     public String uploadImage(MultipartFile image, String email, Integer id) throws IOException {
 
@@ -81,12 +84,12 @@ public class ImageServiceImpl implements ImageService {
 
             Image result = imageRepository.save(newImage);
 
-            ads.setImage(result.getId().toString());
+            ads.setImage("\\ads\\images\\" + result.getId().toString());
             adsRepository.save(ads);
 
             return result.getId().toString();
         } else {
-            return null;
+            throw new ServerErrorException();
         }
     }
 
@@ -94,27 +97,20 @@ public class ImageServiceImpl implements ImageService {
         return fileName.substring(fileName.lastIndexOf(".") + 1);
     }
 
-//    Search image by id
+    //    Search image by id
     @Override
     public Image getImageById(Integer id) {
-        String email = SecurityContextHolder.getContext().getAuthentication().getName();
-        String auth = authorityRepository.findAuthorityByUsername(email).getAuthority();
-        logger.info("Request from user {} for getting image with id: {}", email, id);
+        logger.info("Request for getting image with id: {}", id);
         Optional<Image> optionalImage = imageRepository.findById(id);
-        if (optionalImage.isEmpty()) {
-            return null;
+        if (optionalImage.isPresent()) {
+            return optionalImage.get();
         } else {
-            Image image = optionalImage.get();
-            if (!image.getAds().getSiteUserDetails().getSiteUser().getUsername().equals(email) && auth.equals(USER)) {
-                return null;
-            } else {
-                return image;
-            }
+            throw new ImageNotFoundException();
         }
     }
 
 
-//    Method for updating image existed
+    //    Method for updating image existed
     @Override
     public Image updateImage(Integer id, MultipartFile image) throws IOException {
         String email = SecurityContextHolder.getContext().getAuthentication().getName();
@@ -123,12 +119,13 @@ public class ImageServiceImpl implements ImageService {
         logger.info("Request from user {} for updating image with id: {}", email, id);
 
         Optional<Image> optionalImage = imageRepository.findById(id);
+
         if (optionalImage.isPresent()) {
 
             Image image1 = optionalImage.get();
 
             if (!image1.getAds().getSiteUserDetails().getSiteUser().getUsername().equals(email) && auth.equals(USER)) {
-                return null;
+                throw new NotAccessActionException();
             } else {
                 String filePath = image1.getFilePath();
 
@@ -150,7 +147,7 @@ public class ImageServiceImpl implements ImageService {
                 return imageRepository.save(image1);
             }
         } else {
-            return null;
+            throw new ImageNotFoundException();
         }
     }
 }

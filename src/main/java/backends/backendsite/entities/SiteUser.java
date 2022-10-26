@@ -20,10 +20,6 @@ public class SiteUser {
     private boolean enabled;
 
     @OneToOne(cascade = CascadeType.ALL)
-//    @JoinColumn(name = "authority_username")
-    private Authority authority;
-
-    @OneToOne(cascade = CascadeType.ALL)
     @JoinColumn(name = "site_user_details_id")
     private SiteUserDetails siteUserDetails;
 
@@ -59,11 +55,4 @@ public class SiteUser {
         this.siteUserDetails = userDetails;
     }
 
-    public Authority getAuthority() {
-        return authority;
-    }
-
-    public void setAuthority(Authority authority) {
-        this.authority = authority;
-    }
 }
