@@ -3,7 +3,6 @@ package backends.backendsite;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.http.HttpMethod;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
@@ -12,6 +11,8 @@ import org.springframework.security.provisioning.JdbcUserDetailsManager;
 import org.springframework.security.web.SecurityFilterChain;
 
 import javax.sql.DataSource;
+
+import static org.springframework.security.config.Customizer.withDefaults;
 
 /**
  * Configuration class for web security
@@ -25,7 +26,8 @@ public class WebSecurityConfig {
             "/swagger-ui.html",
             "/v3/api-docs",
             "/webjars/**",
-            "/login", "/register"
+            "/login", "/register",
+            "/ads/images/**"
     };
 
     @Autowired
@@ -35,22 +37,16 @@ public class WebSecurityConfig {
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity security) throws Exception {
         security
-                .cors()
-                .and()
                 .csrf().disable()
-//                .authorizeHttpRequests((auth) ->
-//                        auth
-//                                .mvcMatchers(AUTH_WHITELIST).permitAll()
-//                                .mvcMatchers("/ads/**", "/users/**").authenticated()
-//                )
-                .authorizeRequests()
-                .antMatchers("/login", "/register").permitAll()
-                .antMatchers(HttpMethod.GET, "/ads").permitAll()
-                .antMatchers("/users/*").authenticated()
-                .antMatchers("/ads**", "/users**").authenticated()
-                .mvcMatchers(AUTH_WHITELIST).permitAll()
-                .and()
-                .httpBasic();
+                .authorizeHttpRequests((auth) ->
+                        auth
+                                .mvcMatchers(AUTH_WHITELIST).permitAll()
+                                .mvcMatchers("/ads/**", "/users/**").authenticated()
+
+                )
+                .cors().and()
+                .httpBasic(withDefaults());
+
         return security.build();
     }
 
@@ -67,6 +63,23 @@ public class WebSecurityConfig {
     }
 
 
+
+    //                .cors()
+//                .and()
+//                .csrf().disable()
+////                .authorizeHttpRequests((auth) ->
+////                        auth
+////                                .mvcMatchers(AUTH_WHITELIST).permitAll()
+////                                .mvcMatchers("/ads/**", "/users/**").authenticated()
+////                )
+//                .authorizeRequests()
+//                .antMatchers("/login", "/register").permitAll()
+//                .antMatchers(HttpMethod.GET, "/ads").permitAll()
+//                .antMatchers("/users/*").authenticated()
+//                .antMatchers("/ads**", "/users**").authenticated()
+//                .mvcMatchers(AUTH_WHITELIST).permitAll()
+//                .and()
+//                .httpBasic();
 
 
 

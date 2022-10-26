@@ -16,9 +16,6 @@ public class Authority {
     @Column(name = "authority")
     private String authority;
 
-    @OneToOne(mappedBy = "authority", cascade = CascadeType.ALL)
-    private SiteUser user;
-
     public Authority() {
 
     }
@@ -39,7 +36,5 @@ public class Authority {
         this.authority = authority;
     }
 
-    public SiteUser getUser() {
-        return user;
-    }
+
 }

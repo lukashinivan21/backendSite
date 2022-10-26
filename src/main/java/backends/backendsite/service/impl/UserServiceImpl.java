@@ -5,6 +5,9 @@ import backends.backendsite.dto.ResponseWrapperDto;
 import backends.backendsite.dto.UserDto;
 import backends.backendsite.entities.SiteUser;
 import backends.backendsite.entities.SiteUserDetails;
+import backends.backendsite.exceptionsHandler.exceptions.IncorrectPasswordException;
+import backends.backendsite.exceptionsHandler.exceptions.NotAccessException;
+import backends.backendsite.exceptionsHandler.exceptions.UserNotFoundException;
 import backends.backendsite.mappers.UserMapper;
 import backends.backendsite.repositories.AuthorityRepository;
 import backends.backendsite.repositories.SiteUserRepository;
@@ -77,10 +80,10 @@ public class UserServiceImpl implements UserService {
     @Override
     public NewPasswordDto setPassword(NewPasswordDto password, String email) {
         SiteUser result = siteUserRepository.findByUsername(email);
-        logger.info("Request for change password of user: \"{}\" from email: {}", result.getUsername(), email);
+        logger.info("Request for change password of user: \"{}\"", email);
         if (!passwordEncoder.matches(password.getCurrentPassword(), result.getPassword())) {
             logger.info("Введеный пароль: {} не соответствует текущему паролю: {}. Изменение пароля запрещено", password.getCurrentPassword(), result.getPassword());
-            return null;
+            throw new IncorrectPasswordException();
         } else {
             logger.info("Введеный пароль и текущий пароль совпадают. Изменение пароля допускается.");
             result.setPassword(passwordEncoder.encode(password.getNewPassword()));
@@ -97,14 +100,12 @@ public class UserServiceImpl implements UserService {
         logger.info("Request for getting information about user with id {} from userName: {}", id, email);
         Optional<SiteUserDetails> siteUser = detailsRepository.findById(id);
         if (siteUser.isEmpty()) {
-            return null;
+            throw new UserNotFoundException();
         } else {
-            if ((siteUser.get().getSiteUser().getUsername().equals(email) && role.equals(USER)) || role.equals(ADMIN)) {
-                return userMapper.fromSiteUserToUserDto(siteUser.get());
+            if (!siteUser.get().getSiteUser().getUsername().equals(email) && role.equals(USER)) {
+                throw new NotAccessException();
             } else {
-                UserDto userDto = new UserDto();
-                userDto.setFirstName(NOT_ACCESS);
-                return userDto;
+                return userMapper.fromSiteUserToUserDto(siteUser.get());
             }
         }
     }

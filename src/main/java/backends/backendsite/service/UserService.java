@@ -5,7 +5,7 @@ import backends.backendsite.dto.ResponseWrapperDto;
 import backends.backendsite.dto.UserDto;
 
 /**
- * Interface including methods for working with entity site user and site user details
+ * Interface including methods for working with entities site user and site user details
  */
 public interface UserService {
 

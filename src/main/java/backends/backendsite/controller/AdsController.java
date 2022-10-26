@@ -2,6 +2,8 @@ package backends.backendsite.controller;
 
 import backends.backendsite.dto.*;
 import backends.backendsite.entities.Image;
+import backends.backendsite.exceptionsHandler.exceptions.BadInputDataException;
+import backends.backendsite.exceptionsHandler.exceptions.NotAccessActionException;
 import backends.backendsite.service.AdsService;
 import backends.backendsite.service.ImageService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -23,7 +25,6 @@ import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
 import java.io.IOException;
 
-import static backends.backendsite.service.StringConstants.*;
 
 @RestController
 @RequestMapping("/ads")
@@ -43,11 +44,15 @@ public class AdsController {
             responses = {
                     @ApiResponse(
                             responseCode = "200",
-                            description = "Все объявления из базы данных успешно получены",
+                            description = "All ads are got successfully",
                             content = @Content(
                                     mediaType = MediaType.APPLICATION_JSON_VALUE,
                                     schema = @Schema(implementation = ResponseWrapperDto.class)
                             )
+                    ),
+                    @ApiResponse(
+                            responseCode = "404",
+                            description = "There aren't ads in data base"
                     )
             })
     @GetMapping
@@ -81,15 +86,16 @@ public class AdsController {
     public ResponseEntity<AdsDto> createAds(@RequestPart("properties") @Valid @NotNull @NotBlank CreateAdsDto createAdsDto,
                                             @RequestPart("image") @Valid @NotNull @NotBlank MultipartFile image) throws IOException {
         if (createAdsDto.getTitle() == null || createAdsDto.getDescription() == null || createAdsDto.getPrice() == null) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
+            throw new BadInputDataException();
         }
         String email = SecurityContextHolder.getContext().getAuthentication().getName();
         AdsDto result = adsService.addAds(createAdsDto, email);
         if (result == null) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+            throw new NotAccessActionException();
         } else {
             Integer id = result.getPk();
-            result.setImage(imageService.uploadImage(image, email, id));
+            String imageS = imageService.uploadImage(image, email, id);
+            result.setImage(imageS);
             return ResponseEntity.ok(result);
         }
     }
@@ -104,22 +110,16 @@ public class AdsController {
                                     mediaType = MediaType.APPLICATION_JSON_VALUE,
                                     schema = @Schema(implementation = ResponseWrapperDto.class))),
                     @ApiResponse(
-                            responseCode = "404",
-                            description = "This user hasn't ads"
+                            responseCode = "403",
+                            description = "User hasn't access to getting ads"
                     )
             })
     @GetMapping(value = "/me")
     @PreAuthorize("hasAnyAuthority('ROLE_USER', 'ROLE_ADMIN')")
     public ResponseEntity<ResponseWrapperDto<AdsDto>> getAdsMe(
-//            @RequestParam(required = false) boolean authenticated,
-//            @RequestParam(required = false) String authorities,
-//            @RequestParam(required = false) Role credentials,
             @RequestParam(required = false) Integer details,
             @RequestParam(required = false) String principal) {
         ResponseWrapperDto<AdsDto> adsMe = adsService.getAdsMe(details, principal);
-        if (adsMe == null) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
-        }
         return ResponseEntity.ok(adsMe);
     }
 
@@ -147,12 +147,9 @@ public class AdsController {
     @PreAuthorize("hasAnyAuthority('ROLE_USER', 'ROLE_ADMIN')")
     public ResponseEntity<AdsCommentDto> addAdsComment(@PathVariable Integer adPk, @RequestBody AdsCommentDto adsCommentDto) {
         if (adPk == null || adsCommentDto.getText() == null) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
+            throw new BadInputDataException();
         }
         AdsCommentDto result = adsService.addAdsComment(adPk, adsCommentDto.getText());
-        if (result == null) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
-        }
         return ResponseEntity.ok(result);
     }
 
@@ -168,6 +165,10 @@ public class AdsController {
                             )
                     ),
                     @ApiResponse(
+                            responseCode = "400",
+                            description = "Wrong id of ads"
+                    ),
+                    @ApiResponse(
                             responseCode = "404",
                             description = "Ad with this id hasn't comments"
                     )
@@ -176,9 +177,6 @@ public class AdsController {
     @PreAuthorize("hasAnyAuthority('ROLE_USER', 'ROLE_ADMIN')")
     public ResponseEntity<ResponseWrapperDto<AdsCommentDto>> getAdsComments(@PathVariable Integer adPk) {
         ResponseWrapperDto<AdsCommentDto> result = adsService.getAdsComments(adPk);
-        if (result == null) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
-        }
         return ResponseEntity.ok(result);
     }
 
@@ -194,6 +192,10 @@ public class AdsController {
                             )
                     ),
                     @ApiResponse(
+                            responseCode = "400",
+                            description = "Wrong id of ads"
+                    ),
+                    @ApiResponse(
                             responseCode = "404",
                             description = "Comment with this id doesn't exist"
                     )
@@ -202,9 +204,6 @@ public class AdsController {
     @PreAuthorize("hasAnyAuthority('ROLE_USER', 'ROLE_ADMIN')")
     public ResponseEntity<AdsCommentDto> getAdsCommentOfOneAds(@PathVariable Integer adPk, @PathVariable Integer id) {
         AdsCommentDto result = adsService.getAdsComment(adPk, id);
-        if (result == null) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
-        }
         return ResponseEntity.ok(result);
     }
 
@@ -233,13 +232,7 @@ public class AdsController {
     @PreAuthorize("hasAnyAuthority('ROLE_USER', 'ROLE_ADMIN')")
     public ResponseEntity<String> removeAds(@Parameter(example = "1") @PathVariable Integer id) {
         String result = adsService.removeAds(id);
-        if (result.equals(NOT_FOUND)) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
-        }
-        if (result.equals(NOT_ACCESS)) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
-        }
-        return ResponseEntity.ok(adsService.removeAds(id));
+        return ResponseEntity.ok(result);
     }
 
 
@@ -255,6 +248,10 @@ public class AdsController {
                             )
                     ),
                     @ApiResponse(
+                            responseCode = "400",
+                            description = "Wrong id of ad or wrong id of comment"
+                    ),
+                    @ApiResponse(
                             responseCode = "403",
                             description = "You haven't access for deleting this comment"
                     ),
@@ -267,12 +264,6 @@ public class AdsController {
     @PreAuthorize("hasAnyAuthority('ROLE_USER', 'ROLE_ADMIN')")
     public ResponseEntity<String> deleteAdsComment(@PathVariable Integer adPk, @PathVariable Integer id) {
         String result = adsService.deleteAdsComment(adPk, id);
-        if (result.equals(NOT_FOUND)) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
-        }
-        if (result.equals(NOT_ACCESS)) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
-        }
         return ResponseEntity.ok(result);
     }
 
@@ -301,12 +292,6 @@ public class AdsController {
     @PreAuthorize("hasAnyAuthority('ROLE_USER', 'ROLE_ADMIN')")
     public ResponseEntity<AdsDto> updateAds(@PathVariable Integer id, @RequestBody AdsDto adsDto) {
         AdsDto result = adsService.updateAds(id, adsDto);
-        if (result == null) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
-        }
-        if (result.getTitle().equals(NOT_ACCESS)) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
-        }
         return ResponseEntity.ok(result);
     }
 
@@ -323,6 +308,10 @@ public class AdsController {
                             )
                     ),
                     @ApiResponse(
+                            responseCode = "400",
+                            description = "Wrong id of ad or wrong id of comment"
+                    ),
+                    @ApiResponse(
                             responseCode = "403",
                             description = "You haven't access for updating this comment"
                     ),
@@ -335,15 +324,9 @@ public class AdsController {
     @PreAuthorize("hasAnyAuthority('ROLE_USER', 'ROLE_ADMIN')")
     public ResponseEntity<AdsCommentDto> updateAdsComment(@PathVariable Integer adPk, @PathVariable Integer id, @RequestBody AdsCommentDto adsCommentDto) {
         if (adsCommentDto.getText() == null) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
+            throw new BadInputDataException();
         }
         AdsCommentDto result = adsService.updateAdsComment(adPk, id, adsCommentDto);
-        if (result == null) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
-        }
-        if (result.getText().equals(NOT_ACCESS)) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
-        }
         return ResponseEntity.ok(result);
     }
 
@@ -372,12 +355,6 @@ public class AdsController {
     @PreAuthorize("hasAnyAuthority('ROLE_USER', 'ROLE_ADMIN')")
     public ResponseEntity<FullAdsDto> getFullInfoAboutAds(@PathVariable Integer id) {
         FullAdsDto result = adsService.getAds(id);
-        if (result == null) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
-        }
-        if (result.getTitle().equals(NOT_ACCESS)) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
-        }
         return ResponseEntity.ok(result);
     }
 
@@ -402,9 +379,6 @@ public class AdsController {
     @PreAuthorize("hasAnyAuthority('ROLE_USER', 'ROLE_ADMIN')")
     public ResponseEntity<ResponseWrapperDto<AdsDto>> getAdsWithTitleContainsText(@PathVariable String text) {
         ResponseWrapperDto<AdsDto> result = adsService.getAdsWithTitleContainsText(text);
-        if (result == null) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
-        }
         return ResponseEntity.ok(result);
     }
 
@@ -428,21 +402,30 @@ public class AdsController {
     @PreAuthorize("hasAnyAuthority('ROLE_USER', 'ROLE_ADMIN')")
     public ResponseEntity<ResponseWrapperDto<AdsCommentDto>> getAdsCommentsWithText(@PathVariable String text) {
         ResponseWrapperDto<AdsCommentDto> result = adsService.getCommentWithText(text);
-        if (result == null) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
-        }
         return ResponseEntity.ok(result);
     }
 //    there is in postman
 
 
-    @GetMapping(value = "/{image}", produces = {MediaType.IMAGE_PNG_VALUE})
-    @PreAuthorize("hasAnyAuthority('ROLE_USER', 'ROLE_ADMIN')")
+    @Operation(summary = "Getting image of one ad",
+            responses = {
+                    @ApiResponse(
+                            responseCode = "200",
+                            description = "Image is found successfully",
+                            content = @Content(
+                                    mediaType = MediaType.APPLICATION_JSON_VALUE,
+                                    schema = @Schema(implementation = ResponseWrapperDto.class)
+                            )
+                    ),
+                    @ApiResponse(
+                            responseCode = "404",
+                            description = "Image isn't found"
+                    )
+            })
+    @GetMapping(value = "/images/{image}", produces = {MediaType.IMAGE_PNG_VALUE})
     public ResponseEntity<byte[]> getImage(@PathVariable Integer image) {
         Image imageById = imageService.getImageById(image);
-        if (imageById == null) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
-        }
+
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.parseMediaType(imageById.getMediaType()));
         headers.setContentLength(imageById.getData().length);
@@ -450,16 +433,31 @@ public class AdsController {
     }
 
 
+    @Operation(summary = "Request to change image of one ad",
+            responses = {
+                    @ApiResponse(
+                            responseCode = "200",
+                            description = "Change is completed successfully",
+                            content = @Content(
+                                    mediaType = MediaType.APPLICATION_JSON_VALUE,
+                                    schema = @Schema(implementation = FullAdsDto.class)
+                            )
+                    ),
+                    @ApiResponse(
+                            responseCode = "403",
+                            description = "You haven't access to this action"
+                    ),
+                    @ApiResponse(
+                            responseCode = "404",
+                            description = "Image with this id doesn't exist"
+                    )
+            })
     @PatchMapping(value = "/{id}/image", produces = {MediaType.IMAGE_PNG_VALUE})
     @PreAuthorize("hasAnyAuthority('ROLE_USER', 'ROLE_ADMIN')")
     public ResponseEntity<byte[]> updateImage(@PathVariable Integer id,
                                               @RequestPart("image") @Valid @NotNull @NotBlank MultipartFile image) throws IOException {
 
         Image image1 = imageService.updateImage(id, image);
-
-        if (image1 == null) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
-        }
 
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.parseMediaType(image1.getMediaType()));

@@ -4,6 +4,7 @@ import backends.backendsite.dto.*;
 import backends.backendsite.entities.Ads;
 import backends.backendsite.entities.AdsComment;
 import backends.backendsite.entities.SiteUser;
+import backends.backendsite.exceptionsHandler.exceptions.*;
 import backends.backendsite.mappers.AdsCommentMapper;
 import backends.backendsite.mappers.SelfAdsMapper;
 import backends.backendsite.repositories.AdsCommentRepository;
@@ -54,11 +55,7 @@ public class AdsServiceImpl implements AdsService {
         logger.info("Request for getting all ads from data base");
         List<Ads> adsList = adsRepository.findAll();
         if (adsList.isEmpty()) {
-            List<AdsDto> list = new ArrayList<>();
-            ResponseWrapperDto<AdsDto> result = new ResponseWrapperDto<>();
-            result.setResults(list);
-            result.setCount(list.size());
-            return result;
+            throw new EmptyListException();
         }
         List<AdsDto> adsDtoList = new ArrayList<>();
         for (Ads ads : adsList) {
@@ -70,7 +67,24 @@ public class AdsServiceImpl implements AdsService {
         return responseWrapperDto;
     }
 
-    //    Method for getting all ads of one user
+
+    //    method for creating ads
+    @Override
+    public AdsDto addAds(CreateAdsDto adsDto, String email) {
+        logger.info("Create new ad by user with username: {}", email);
+        Optional<SiteUser> siteUser = siteUserRepository.findSiteUserByUsername(email);
+        if (siteUser.isPresent()) {
+            Ads ads = selfAdsMapper.fromCreateAdsDtoToAds(adsDto);
+            ads.setAuthor(siteUser.get().getSiteUserDetails().getId());
+            ads.setSiteUserDetails(siteUser.get().getSiteUserDetails());
+            return selfAdsMapper.fromAdsToAdsDto(adsRepository.save(ads));
+        } else {
+            return null;
+        }
+    }
+
+
+    //    Method for getting all ads of one authorized user
     @Override
     public ResponseWrapperDto<AdsDto> getAdsMe(Integer price, String title) {
         String email = SecurityContextHolder.getContext().getAuthentication().getName();
@@ -100,25 +114,17 @@ public class AdsServiceImpl implements AdsService {
                         .map(selfAdsMapper::fromAdsToAdsDto)
                         .collect(Collectors.toList());
             }
-            ResponseWrapperDto<AdsDto> responseWrapperDto = new ResponseWrapperDto<>();
-            responseWrapperDto.setResults(list);
-            responseWrapperDto.setCount(list.size());
-            return responseWrapperDto;
+            if (list.isEmpty()) {
+                throw new EmptyListException();
+            } else {
+                ResponseWrapperDto<AdsDto> responseWrapperDto = new ResponseWrapperDto<>();
+                responseWrapperDto.setResults(list);
+                responseWrapperDto.setCount(list.size());
+                return responseWrapperDto;
+            }
         } else {
-            return null;
+            throw new NotAccessException();
         }
-    }
-
-
-    //    method for creating ads
-    @Override
-    public AdsDto addAds(CreateAdsDto adsDto, String email) {
-        logger.info("Create new ad by user with username: {}", email);
-        SiteUser siteUser = siteUserRepository.findByUsername(email);
-        Ads ads = selfAdsMapper.fromCreateAdsDtoToAds(adsDto);
-        ads.setAuthor(siteUser.getSiteUserDetails().getId());
-        ads.setSiteUserDetails(siteUser.getSiteUserDetails());
-        return selfAdsMapper.fromAdsToAdsDto(adsRepository.save(ads));
     }
 
     //     Method for creating comment for one ad
@@ -128,7 +134,7 @@ public class AdsServiceImpl implements AdsService {
         logger.info("Request for adding comment with text: \"{}\" to ad with id {} from user with username: {}", text, adPk, username);
         Optional<Ads> adsOptional = adsRepository.findById(adPk);
         if (adsOptional.isEmpty()) {
-            return null;
+            throw new AdsNotFoundException();
         } else {
             SiteUser siteUser = siteUserRepository.findByUsername(username);
             AdsComment result = new AdsComment();
@@ -146,15 +152,20 @@ public class AdsServiceImpl implements AdsService {
     @Override
     public ResponseWrapperDto<AdsCommentDto> getAdsComments(Integer adPk) {
         logger.info("Request for getting all comments of ad with id {}", adPk);
-        List<AdsComment> list = adsCommentRepository.findAdsCommentsByAds_Id(adPk);
-        if (list.isEmpty()) {
-            return null;
+        Optional<Ads> optionalAds = adsRepository.findById(adPk);
+        if (optionalAds.isEmpty()) {
+            throw new IncorrectAdsIdException();
         } else {
-            List<AdsCommentDto> result = list.stream().map(commentMapper::fromAdsCommentToAdsCommentDto).collect(Collectors.toList());
-            ResponseWrapperDto<AdsCommentDto> responseWrapperDto = new ResponseWrapperDto<>();
-            responseWrapperDto.setResults(result);
-            responseWrapperDto.setCount(result.size());
-            return responseWrapperDto;
+            List<AdsComment> list = adsCommentRepository.findAdsCommentsByAds_Id(adPk);
+            if (list.isEmpty()) {
+                throw new EmptyListException();
+            } else {
+                List<AdsCommentDto> result = list.stream().map(commentMapper::fromAdsCommentToAdsCommentDto).collect(Collectors.toList());
+                ResponseWrapperDto<AdsCommentDto> responseWrapperDto = new ResponseWrapperDto<>();
+                responseWrapperDto.setResults(result);
+                responseWrapperDto.setCount(result.size());
+                return responseWrapperDto;
+            }
         }
     }
 
@@ -165,12 +176,12 @@ public class AdsServiceImpl implements AdsService {
         logger.info("Request for getting information about comment with id: {} of ads with id: {}", id, adPk);
         Optional<Ads> optionalAds = adsRepository.findById(adPk);
         if (optionalAds.isEmpty()) {
-            return null;
+            throw new IncorrectAdsIdException();
         } else {
             List<AdsComment> commentList = optionalAds.get().getComments();
             Optional<AdsComment> optionalAdsComment = adsCommentRepository.findById(id);
             if (optionalAdsComment.isEmpty() || commentList.isEmpty() || !commentList.contains(optionalAdsComment.get())) {
-                return null;
+                throw new CommentNotFoundException();
             } else {
                 return commentMapper.fromAdsCommentToAdsCommentDto(optionalAdsComment.get());
             }
@@ -186,11 +197,11 @@ public class AdsServiceImpl implements AdsService {
         logger.info("Request from user with username: \"{}\" for deleting ad with id {}", email, id);
         Optional<Ads> ads = adsRepository.findById(id);
         if (ads.isEmpty()) {
-            return NOT_FOUND;
+            throw new AdsNotFoundException();
         } else {
             Ads deletedAds = ads.get();
             if (role.equals(USER) && !deletedAds.getSiteUserDetails().getSiteUser().getUsername().equals(email)) {
-                return NOT_ACCESS;
+                throw new NotAccessActionException();
             } else {
                 adsRepository.delete(deletedAds);
                 return SUCCESS;
@@ -207,18 +218,22 @@ public class AdsServiceImpl implements AdsService {
         logger.info("Request from user with username: \"{}\" for deleting comment with id: {}", email, id);
         Optional<Ads> adsOptional = adsRepository.findById(adPk);
         if (adsOptional.isEmpty()) {
-            return NOT_FOUND;
+            throw new IncorrectAdsIdException();
         } else {
             List<AdsComment> commentList = adsOptional.get().getComments();
             Optional<AdsComment> optionalAdsComment = adsCommentRepository.findById(id);
-            if (commentList.isEmpty() || optionalAdsComment.isEmpty() || !commentList.contains(optionalAdsComment.get())) {
-                return NOT_FOUND;
+            if (optionalAdsComment.isEmpty()) {
+                throw new CommentNotFoundException();
             } else {
-                if (role.equals(USER) && !optionalAdsComment.get().getSiteUserDetails().getSiteUser().getUsername().equals(email)) {
-                    return NOT_ACCESS;
+                if (commentList.isEmpty() || !commentList.contains(optionalAdsComment.get())) {
+                    throw new CommentNotBelongAdException();
                 } else {
-                    adsCommentRepository.delete(optionalAdsComment.get());
-                    return SUCCESS;
+                    if (role.equals(USER) && !optionalAdsComment.get().getSiteUserDetails().getSiteUser().getUsername().equals(email)) {
+                        throw new NotAccessActionException();
+                    } else {
+                        adsCommentRepository.delete(optionalAdsComment.get());
+                        return SUCCESS;
+                    }
                 }
             }
         }
@@ -233,13 +248,11 @@ public class AdsServiceImpl implements AdsService {
         logger.info("Request from user with username: \"{}\" for getting full info about ads with id {}", email, id);
         Optional<Ads> adsOptional = adsRepository.findById(id);
         if (adsOptional.isEmpty()) {
-            return null;
+            throw new AdsNotFoundException();
         } else {
             Ads result = adsOptional.get();
             if (role.equals(USER) && !result.getSiteUserDetails().getSiteUser().getUsername().equals(email)) {
-                FullAdsDto fullAdsDto = new FullAdsDto();
-                fullAdsDto.setTitle(NOT_ACCESS);
-                return fullAdsDto;
+                throw new NotAccessException();
             } else {
                 return selfAdsMapper.mapToFullAdsDto(result, result.getSiteUserDetails());
             }
@@ -255,12 +268,10 @@ public class AdsServiceImpl implements AdsService {
         logger.info("Request for updating ad with id {} from user with username: \"{}\"", id, username);
         Optional<Ads> optionalAds = adsRepository.findById(id);
         if (optionalAds.isEmpty()) {
-            return null;
+            throw new AdsNotFoundException();
         } else {
             if (role.equals(USER) && !optionalAds.get().getSiteUserDetails().getSiteUser().getUsername().equals(username)) {
-                AdsDto answer = new AdsDto();
-                answer.setTitle(NOT_ACCESS);
-                return answer;
+                throw new NotAccessActionException();
             } else {
                 Ads result = selfAdsMapper.fromAdsDtoToAds(adsDto, optionalAds.get());
                 return selfAdsMapper.fromAdsToAdsDto(adsRepository.save(result));
@@ -277,20 +288,22 @@ public class AdsServiceImpl implements AdsService {
         logger.info("Request from user with username: \"{}\" for updating comment with id {}", email, id);
         Optional<Ads> adsOptional = adsRepository.findById(adPk);
         if (adsOptional.isEmpty()) {
-            return null;
+            throw new IncorrectAdsIdException();
         } else {
             List<AdsComment> commentList = adsOptional.get().getComments();
             Optional<AdsComment> optionalAdsComment = adsCommentRepository.findById(id);
-            if (commentList.isEmpty() || optionalAdsComment.isEmpty() || !commentList.contains(optionalAdsComment.get())) {
-                return null;
+            if (optionalAdsComment.isEmpty()) {
+                throw new CommentNotFoundException();
             } else {
-                if (role.equals(USER) && !optionalAdsComment.get().getSiteUserDetails().getSiteUser().getUsername().equals(email)) {
-                    AdsCommentDto answer = new AdsCommentDto();
-                    answer.setText(NOT_ACCESS);
-                    return answer;
+                if (commentList.isEmpty() || !commentList.contains(optionalAdsComment.get())) {
+                    throw new CommentNotBelongAdException();
                 } else {
-                    AdsComment result = commentMapper.fromAdsCommentDtoToAdsComment(commentDto, optionalAdsComment.get());
-                    return commentMapper.fromAdsCommentToAdsCommentDto(adsCommentRepository.save(result));
+                    if (role.equals(USER) && !optionalAdsComment.get().getSiteUserDetails().getSiteUser().getUsername().equals(email)) {
+                        throw new NotAccessActionException();
+                    } else {
+                        AdsComment result = commentMapper.fromAdsCommentDtoToAdsComment(commentDto, optionalAdsComment.get());
+                        return commentMapper.fromAdsCommentToAdsCommentDto(adsCommentRepository.save(result));
+                    }
                 }
             }
         }
@@ -302,7 +315,7 @@ public class AdsServiceImpl implements AdsService {
     public ResponseWrapperDto<AdsCommentDto> getCommentWithText(String text) {
         List<AdsComment> result = adsCommentRepository.findAdsCommentsByTextContains(text);
         if (result.isEmpty()) {
-            return null;
+            throw new EmptyListException();
         } else {
             List<AdsCommentDto> list = result.stream().map(commentMapper::fromAdsCommentToAdsCommentDto).collect(Collectors.toList());
             ResponseWrapperDto<AdsCommentDto> responseWrapperDto = new ResponseWrapperDto<>();
@@ -318,7 +331,7 @@ public class AdsServiceImpl implements AdsService {
     public ResponseWrapperDto<AdsDto> getAdsWithTitleContainsText(String text) {
         List<Ads> adsList = adsRepository.findAdsByTitleContains(text);
         if (adsList.isEmpty()) {
-            return null;
+            throw new EmptyListException();
         } else {
             List<AdsDto> list = adsList.stream().map(selfAdsMapper::fromAdsToAdsDto).collect(Collectors.toList());
             ResponseWrapperDto<AdsDto> result = new ResponseWrapperDto<>();
