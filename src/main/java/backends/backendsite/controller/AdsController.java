@@ -404,9 +404,9 @@ public class AdsController {
         ResponseWrapperDto<AdsCommentDto> result = adsService.getCommentWithText(text);
         return ResponseEntity.ok(result);
     }
+
+
 //    there is in postman
-
-
     @Operation(summary = "Getting image of one ad",
             responses = {
                     @ApiResponse(
@@ -414,7 +414,7 @@ public class AdsController {
                             description = "Image is found successfully",
                             content = @Content(
                                     mediaType = MediaType.APPLICATION_JSON_VALUE,
-                                    schema = @Schema(implementation = ResponseWrapperDto.class)
+                                    schema = @Schema(implementation = byte[].class)
                             )
                     ),
                     @ApiResponse(
@@ -433,6 +433,7 @@ public class AdsController {
     }
 
 
+//    there is in postman
     @Operation(summary = "Request to change image of one ad",
             responses = {
                     @ApiResponse(
@@ -440,7 +441,7 @@ public class AdsController {
                             description = "Change is completed successfully",
                             content = @Content(
                                     mediaType = MediaType.APPLICATION_JSON_VALUE,
-                                    schema = @Schema(implementation = FullAdsDto.class)
+                                    schema = @Schema(implementation = byte[].class)
                             )
                     ),
                     @ApiResponse(
