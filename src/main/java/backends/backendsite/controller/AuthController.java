@@ -2,14 +2,11 @@ package backends.backendsite.controller;
 
 import backends.backendsite.dto.LoginReq;
 import backends.backendsite.dto.RegisterReq;
-import backends.backendsite.dto.ResponseWrapperDto;
-import backends.backendsite.dto.Role;
 import backends.backendsite.exceptionsHandler.exceptions.NotLoginException;
 import backends.backendsite.exceptionsHandler.exceptions.UserAlreadyExistException;
 import backends.backendsite.service.AuthService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
-import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -37,8 +34,7 @@ public class AuthController {
                             responseCode = "200",
                             description = "Access is authorized successfully",
                             content = @Content(
-                                    mediaType = MediaType.APPLICATION_JSON_VALUE,
-                                    schema = @Schema(implementation = ResponseWrapperDto.class))),
+                                    mediaType = MediaType.APPLICATION_JSON_VALUE)),
                     @ApiResponse(
                             responseCode = "403",
                             description = "Access is forbidden"
@@ -59,8 +55,7 @@ public class AuthController {
                             responseCode = "200",
                             description = "Registration is completed successfully",
                             content = @Content(
-                                    mediaType = MediaType.APPLICATION_JSON_VALUE,
-                                    schema = @Schema(implementation = ResponseWrapperDto.class))),
+                                    mediaType = MediaType.APPLICATION_JSON_VALUE)),
                     @ApiResponse(
                             responseCode = "400",
                             description = "Check input data"
@@ -68,7 +63,6 @@ public class AuthController {
             })
     @PostMapping("/register")
     public ResponseEntity<?> register(@RequestBody RegisterReq req) {
-//        Role role = req.getRole() == null ? USER : req.getRole();
         if (authService.register(req, USER)) {
             return ResponseEntity.ok().build();
         } else {

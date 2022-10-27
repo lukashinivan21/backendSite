@@ -13,7 +13,7 @@ import org.springframework.stereotype.Service;
 @Service
 public class SelfAdsMapperImpl implements SelfAdsMapper {
 
-//     method converts from ads dto to ads entity
+    //     method converts from ads dto to ads entity
     @Override
     public Ads fromAdsDtoToAds(AdsDto adsDto, Ads ads) {
         if (adsDto.getTitle() != null) {
@@ -25,7 +25,7 @@ public class SelfAdsMapperImpl implements SelfAdsMapper {
         return ads;
     }
 
-//    method converts from ads entity to ads dto
+    //    method converts from ads entity to ads dto
     @Override
     public AdsDto fromAdsToAdsDto(Ads ads) {
         AdsDto adsDto = new AdsDto();
@@ -47,18 +47,20 @@ public class SelfAdsMapperImpl implements SelfAdsMapper {
         return adsDto;
     }
 
-//    method converts from create ads dto to ads entity
+    //    method converts from create ads dto to ads entity
     @Override
     public Ads fromCreateAdsDtoToAds(CreateAdsDto createAdsDto) {
         Ads ads = new Ads();
         ads.setTitle(createAdsDto.getTitle());
         ads.setDescription(createAdsDto.getDescription());
         ads.setPrice(createAdsDto.getPrice());
-        ads.setImage(createAdsDto.getImage());
+        if (createAdsDto.getImage() != null) {
+            ads.setImage(createAdsDto.getImage());
+        }
         return ads;
     }
 
-//    method converts from ads entity and site user details entity to full ads dto
+    //    method converts from ads entity and site user details entity to full ads dto
     @Override
     public FullAdsDto mapToFullAdsDto(Ads ads, SiteUserDetails userDetails) {
         FullAdsDto result = new FullAdsDto();

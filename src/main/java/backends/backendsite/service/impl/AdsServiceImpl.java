@@ -178,12 +178,16 @@ public class AdsServiceImpl implements AdsService {
         if (optionalAds.isEmpty()) {
             throw new IncorrectAdsIdException();
         } else {
-            List<AdsComment> commentList = optionalAds.get().getComments();
+            List<AdsComment> commentList = adsCommentRepository.findAdsCommentsByAds_Id(adPk);
             Optional<AdsComment> optionalAdsComment = adsCommentRepository.findById(id);
-            if (optionalAdsComment.isEmpty() || commentList.isEmpty() || !commentList.contains(optionalAdsComment.get())) {
+            if (optionalAdsComment.isEmpty()) {
                 throw new CommentNotFoundException();
             } else {
-                return commentMapper.fromAdsCommentToAdsCommentDto(optionalAdsComment.get());
+                if (commentList.isEmpty() || !commentList.contains(optionalAdsComment.get())) {
+                    throw new CommentNotBelongAdException();
+                } else {
+                    return commentMapper.fromAdsCommentToAdsCommentDto(optionalAdsComment.get());
+                }
             }
         }
     }
@@ -220,7 +224,7 @@ public class AdsServiceImpl implements AdsService {
         if (adsOptional.isEmpty()) {
             throw new IncorrectAdsIdException();
         } else {
-            List<AdsComment> commentList = adsOptional.get().getComments();
+            List<AdsComment> commentList = adsCommentRepository.findAdsCommentsByAds_Id(adPk);
             Optional<AdsComment> optionalAdsComment = adsCommentRepository.findById(id);
             if (optionalAdsComment.isEmpty()) {
                 throw new CommentNotFoundException();
@@ -290,7 +294,7 @@ public class AdsServiceImpl implements AdsService {
         if (adsOptional.isEmpty()) {
             throw new IncorrectAdsIdException();
         } else {
-            List<AdsComment> commentList = adsOptional.get().getComments();
+            List<AdsComment> commentList = adsCommentRepository.findAdsCommentsByAds_Id(adPk);
             Optional<AdsComment> optionalAdsComment = adsCommentRepository.findById(id);
             if (optionalAdsComment.isEmpty()) {
                 throw new CommentNotFoundException();
